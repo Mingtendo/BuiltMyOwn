@@ -1,9 +1,9 @@
 #include "mypasscrack.hpp"
 #include <iostream>
 #include <bitset>
-#include <vector>
 
-std::string paca::string_to_bitstring(std::string const &s)
+// Put in string, and get its form as a vector of bits. 
+std::vector<int> paca::string_to_bitstring(std::string const &s)
 {
     std::string bits = "";
 
@@ -14,14 +14,21 @@ std::string paca::string_to_bitstring(std::string const &s)
         bits += temp.to_string();
     }
 
-    return bits;
+    std::vector<int> result;
+    for (std::size_t i = 0; i < bits.size(); i++)
+    {
+        int j = bits[i];
+        result.push_back(j);
+    }
+
+    return result;
 }
 
 // Takes in an ASCII string and outputs a 128-bit digest in hex as a string.
 std::string paca::myMD5(std::string const &input)
 {
     // Convert string into chunks of 512-bit blocks.
-    std::string bits = paca::string_to_bitstring(input);
+    std::vector<int> bits = paca::string_to_bitstring(input);
 
     // Pad the string so that it's divisible by 512.
     /*
@@ -36,11 +43,11 @@ std::string paca::myMD5(std::string const &input)
    // TODO: Split into 512-bit chunks.
     if (!(bits.size() % 512 == 0))
     {
-        std::string original = bits;
+        std::vector<int> original = bits;
         
         if (bits.size() % 512 < 448)
         {
-            bits += "1";
+            bits.push_back(1);
         }
 
     }
