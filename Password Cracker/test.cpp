@@ -1,7 +1,8 @@
-//#include "mypasscrack.hpp"
+#include "mypasscrack.hpp"
 #include <iostream>
 #include <string>
 #include <bitset>
+#include <limits>
 
 int main()
 {
@@ -13,9 +14,18 @@ int main()
         int letter = c;
         std::cout << "letter " << c << ": " << letter << std::endl;
         std::bitset<8> temp(letter);    // Convert to bits.
+        for (int i = 0; i < 8; i++)
+        {
+            std::cout << "bit " << i << ": " << temp[i] << std::endl;
+        }
         bits += temp.to_string();
         std::cout << "bits: " << bits << std::endl;
     }
+
+    // unsigned long long int x = std::numeric_limits<unsigned long long int>::max();
+    // std::cout << x << std::endl;
+
+    std::string testMD5algorithm = paca::myMD5(test);
 
     return 0;
 }
