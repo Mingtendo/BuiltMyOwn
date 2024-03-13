@@ -12,7 +12,7 @@ int main()
     {
         int letter = c;
         std::cout << "letter " << c << ": " << letter << std::endl;
-        std::bitset<8> temp(letter);
+        std::bitset<8> temp(letter);    // Convert to bits.
         bits += temp.to_string();
         std::cout << "bits: " << bits << std::endl;
     }
