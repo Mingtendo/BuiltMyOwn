@@ -5,7 +5,7 @@
 
 namespace paca
 {
-    std::vector<int> string_to_bitstring(std::string const &s);
+    std::string string_to_bitstring(std::string const &s);
     std::string myMD5(std::string const &input);
 }
 
