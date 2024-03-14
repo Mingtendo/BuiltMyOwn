@@ -1,5 +1,6 @@
 #include "mypasscrack.hpp"
 #include <iostream>
+#include <sstream>
 
 /*
     Things Learned So Far:
@@ -7,7 +8,7 @@
     2. std::bitset<> constructor allows std::strings as input.
     3a. std::bitset<>[0] is the rightmost bit (smallest bit); opposite of most array-like containers.
     3b. In order to manually turn integer bits (1/0) from a std::vector to a std::bitset, be sure to start at bitset.size()-1 and go backwards to 0 to maintain order.
-    
+    4. To convert integers into a string of hexadecimal digits, put them into a std::stringstream with std::hex, then pass the stream into a string constructor (and convert the stream into a string).
 */
 
 // Put in string of chars, and get its form as a vector of bits. 
@@ -34,11 +35,24 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
     for (std::size_t i = 0; i < huge_string.size(); i+=32)
     {
         std::string chunk = huge_string.substr(i, 32);
-        std::cout << "chunk " << i/32 << ": " << chunk << std::endl;
+        // std::cout << "chunk " << i/32 << ": " << chunk << std::endl;
         result.push_back(std::bitset<32>(chunk));
     }
 
     return result;
+}
+
+/*
+    Rotates a uint32_t n to the left by c bits, and returns the result.
+    Taken from https://stackoverflow.com/questions/776508/best-practices-for-circular-shift-rotate-operations-in-c 
+    Honestly I did not want to write a function to shift bits so I hope this works.
+*/ 
+uint32_t paca::rotl32(uint32_t n, unsigned int c)
+{
+    const unsigned int mask = (CHAR_BIT*sizeof(n)-1);
+
+    c &= mask;
+    return (n<<c)|(n>>((-c)&mask));
 }
 
 // Takes in an ASCII string and outputs a 128-bit digest in hex as a string.
@@ -61,7 +75,7 @@ std::string paca::myMD5(std::string const &input)
    // DONE: Pad the message.
     if (bits.size() % 512 != 0)
     {
-        unsigned long long int padding = bits.size();  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
+        uint64_t padding = bits.size();  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
         std::cout << "padding: " << padding << std::endl;
 
         std::string to_pad = std::bitset<64>(padding).to_string();
@@ -71,7 +85,7 @@ std::string paca::myMD5(std::string const &input)
         {
             bits += '1';
         }
-
+        // Add '0' until message length in bits % 512 == 448.
         while (bits.size()%512 < 448)
         {
             bits += '0';
@@ -101,14 +115,20 @@ std::string paca::myMD5(std::string const &input)
     // Main algorithm
 
     // Initial variables
-    unsigned long int a0 = 0x67452301;
-    unsigned long int b0 = 0xefcdab89;
-    unsigned long int c0 = 0x98badcfe;
-    unsigned long int d0 = 0x10325476;
+    uint32_t a0 = 0x67452301;
+    uint32_t b0 = 0xefcdab89;
+    uint32_t c0 = 0x98badcfe;
+    uint32_t d0 = 0x10325476;
     // Specifies per-round shift amounts. Taken from Wikipedia.
-    unsigned long int s[64] = {7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22, 5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20, 4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23, 6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21};
+    uint32_t s[64] = 
+    {
+        7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22, 
+        5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20, 
+        4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23, 
+        6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
+    };
     // Constants generated using K[i] := floor(2^32*abs(sin(i+1))), where i is [0, 63] inclusive.
-    unsigned long int K[64] = 
+    uint32_t K[64] = 
     {  
         0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 
         0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501, 
@@ -139,18 +159,52 @@ std::string paca::myMD5(std::string const &input)
     */
     for (std::bitset<512> bs: allInputBits)
     {
-        std::vector<std::bitset<32>> words = chunk512_to_chunk32(bs);
-        unsigned long int A = a0, B = b0, C = c0, D = d0;
+        std::vector<std::bitset<32>> M = chunk512_to_chunk32(bs);
+        uint32_t A = a0, B = b0, C = c0, D = d0;
         
+        // Calculate hashes for this chunk.
         for (unsigned int i = 0; i < 64; i++)
         {
-            unsigned long int F, g;
+            uint32_t F, g;
             if (0 <= i and i <= 15)
             {
-                F = (B & C) | ((~B) & D);
+                F = (B&C)|((~B)&D);
+                g = i;
             }
+            else if (16 <= i and i <= 31)
+            {
+                F = (D&B)|((~D)&C);
+                g = (5*i+1)%16;
+            }
+            else if (32 <= i and i <= 47)
+            {
+                F = B^C^D;
+                g = (3*i+5)%16;
+            }
+            else if (48 <= i and i <= 63)
+            {
+                F = C^(B|(~D));
+                g = (7*i)%16;
+            }
+
+            uint32_t cur = M[g].to_ulong();
+            F += A+K[i]+cur;
+            A = D;
+            D = C;
+            C = B;
+            B += paca::rotl32(F, s[i]);
         }
+
+        // Add chunk's hash to overall result.
+        a0 += A;
+        b0 += B;
+        c0 += C;
+        d0 += D;
     }
 
-    return "Done";
+    std::stringstream strings;
+    strings << std::hex << a0 << b0 << c0 << d0;
+    std::string digest(strings.str());
+
+    return digest;
 }
