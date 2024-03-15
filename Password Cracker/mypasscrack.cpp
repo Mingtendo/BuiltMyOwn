@@ -76,33 +76,29 @@ std::string paca::myMD5(std::string const &input)
 
    // DONE: How to convert bit string to bits.
    // DONE: Pad the message.
-    if (bits.size() % 512 != 0)
+    uint64_t padding = bits.size();  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
+    std::cout << "padding: " << padding << std::endl;
+
+    std::string to_pad = std::bitset<64>(padding).to_string();
+    std::cout << "to_pad: " << to_pad << std::endl;
+    
+    // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
+    bits += '1';
+
+    // Add '0' until message length in bits % 512 == 448.
+    while (bits.size()%512 < 448)
     {
-        uint64_t padding = bits.size();  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
-        std::cout << "padding: " << padding << std::endl;
-
-        std::string to_pad = std::bitset<64>(padding).to_string();
-        std::cout << "to_pad: " << to_pad << std::endl;
-        
-        // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
-        bits += '1';
-
-        // Add '0' until message length in bits % 512 == 448.
-        while (bits.size()%512 < 448)
-        {
-            bits += '0';
-        }
-
-        std::cout << "0-padded bits size: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
-
-        // Add padding bits to message.
-        bits += to_pad;
-
-        std::cout << "padded to 512-bit multiple: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
-
+        bits += '0';
     }
 
-    std::cout << "padded message in bits: " << bits << std::endl;
+    std::cout << "0-padded bits size: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
+
+    // Add padding bits to message.
+    bits += to_pad;
+
+    std::cout << "padded to 512-bit multiple: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
+
+    std::cout << "padded message in bits:\n" << bits << std::endl;
 
     // DONE: Break into 512-bit chunks.
     std::vector<std::bitset<512>> allInputBits;
@@ -111,7 +107,7 @@ std::string paca::myMD5(std::string const &input)
     {
         std::bitset<512> to_push(bits.substr(chunk, 512));  // Automatic conversion of bit string to bits.
         allInputBits.push_back(to_push);
-        std::cout << "chunk " << chunk/512 << ": " << to_push << std::endl;
+        std::cout << "chunk " << chunk/512 << ":\n" << to_push << std::endl;
     }
 
     // Main algorithm
