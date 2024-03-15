@@ -86,7 +86,7 @@ std::string paca::myMD5(std::string const &input)
     bits += '1';
 
     // Add '0' until message length in bits % 512 == 448.
-    while (bits.size()%512 < 448)
+    while (bits.size()%512 < 448 || bits.size()%512 > 448)
     {
         bits += '0';
     }
