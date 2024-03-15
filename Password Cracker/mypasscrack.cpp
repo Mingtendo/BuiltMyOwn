@@ -97,7 +97,6 @@ std::string paca::myMD5(std::string const &input)
     bits += to_pad;
 
     std::cout << "padded to 512-bit multiple: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
-
     std::cout << "padded message in bits:\n" << bits << std::endl;
 
 
@@ -112,8 +111,7 @@ std::string paca::myMD5(std::string const &input)
         std::cout << "chunk " << chunk/512 << ":\n" << to_push << std::endl;
     }
 
-    // Main algorithm
-
+    // MAIN ALGORITHM
     // Initial variables
     uint32_t a0 = 0x67452301;
     uint32_t b0 = 0xefcdab89;
