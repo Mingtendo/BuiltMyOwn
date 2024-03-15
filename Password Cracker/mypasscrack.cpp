@@ -46,6 +46,9 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
     Rotates a uint32_t n to the left by c bits, and returns the result.
     Taken from https://stackoverflow.com/questions/776508/best-practices-for-circular-shift-rotate-operations-in-c 
     Honestly I did not want to write a function to shift bits so I hope this works.
+
+    DONE: NO FURTHER TESTING NEEDED.
+    WHY: Did not change the hash output (even though the hashes are wrong).
 */ 
 uint32_t paca::rotl32(uint32_t n, unsigned int c)
 {
@@ -81,10 +84,9 @@ std::string paca::myMD5(std::string const &input)
         std::string to_pad = std::bitset<64>(padding).to_string();
         std::cout << "to_pad: " << to_pad << std::endl;
         
-        if (bits.size()%512 < 448)
-        {
-            bits += '1';
-        }
+        // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
+        bits += '1';
+
         // Add '0' until message length in bits % 512 == 448.
         while (bits.size()%512 < 448)
         {
@@ -109,7 +111,7 @@ std::string paca::myMD5(std::string const &input)
     {
         std::bitset<512> to_push(bits.substr(chunk, 512));  // Automatic conversion of bit string to bits.
         allInputBits.push_back(to_push);
-        std::cout << "chunk " << chunk%512 << ": " << to_push << std::endl;
+        std::cout << "chunk " << chunk/512 << ": " << to_push << std::endl;
     }
 
     // Main algorithm
@@ -166,33 +168,33 @@ std::string paca::myMD5(std::string const &input)
         for (unsigned int i = 0; i < 64; i++)
         {
             uint32_t F, g;
-            if (0 <= i and i <= 15)
+            if (0 <= i && i <= 15)
             {
-                F = (B&C)|((~B)&D);
+                F = D^(B&(C^D));
                 g = i;
             }
-            else if (16 <= i and i <= 31)
+            else if (16 <= i && i <= 31)
             {
-                F = (D&B)|((~D)&C);
+                F = C^(D&(B^C));
                 g = (5*i+1)%16;
             }
-            else if (32 <= i and i <= 47)
+            else if (32 <= i && i <= 47)
             {
                 F = B^C^D;
                 g = (3*i+5)%16;
             }
-            else if (48 <= i and i <= 63)
+            else if (48 <= i && i <= 63)
             {
                 F = C^(B|(~D));
                 g = (7*i)%16;
             }
 
             uint32_t cur = M[g].to_ulong();
-            F += A+K[i]+cur;
+            F = F+A+K[i]+cur;
             A = D;
             D = C;
             C = B;
-            B += paca::rotl32(F, s[i]);
+            B = B+paca::rotl32(F, s[i]);
         }
 
         // Add chunk's hash to overall result.
