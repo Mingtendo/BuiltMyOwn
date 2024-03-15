@@ -26,7 +26,7 @@ void hashWords(std::vector<std::string> &passwords)
     {
         std::string out = paca::myMD5(pass);
         std::cout << "Result of hashing \'" << pass << "\':" << std::endl;
-        std::cout << out << std::endl;
+        std::cout << out << "\n------------------------------------------------------------------------"<< std::endl;
     }
 }
 

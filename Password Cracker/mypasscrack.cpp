@@ -16,7 +16,7 @@ std::string paca::string_to_bitstring(std::string const &s)
 {
     std::string result = "";
 
-    for (char c: s)
+    for (unsigned char c: s)
     {
         int letter = c;
         std::bitset<8> temp(letter);
@@ -99,6 +99,8 @@ std::string paca::myMD5(std::string const &input)
     std::cout << "padded to 512-bit multiple: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
 
     std::cout << "padded message in bits:\n" << bits << std::endl;
+
+
 
     // DONE: Break into 512-bit chunks.
     std::vector<std::bitset<512>> allInputBits;
