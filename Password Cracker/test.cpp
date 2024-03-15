@@ -10,32 +10,41 @@ bool isBigEndian()
     return biglittle;
 }
 
+void hashWords(std::vector<std::string> &passwords)
+{
+    for (std::string pass: passwords)
+    {
+        std::string out = paca::myMD5(pass);
+        std::cout << "Result of hashing \'" << pass << "\':" << std::endl;
+        std::cout << out << std::endl;
+    }
+}
+
 int main()
 {
     // Can't copy a string into a bitset. Must be converted to char first, and then bits.
+    /* 
     std::string test = "password";
-    // std::string bits;
-    // for (char c: test)
-    // {
-    //     int letter = c;
-    //     std::cout << "letter " << c << ": " << letter << std::endl;
-    //     std::bitset<8> temp(letter);    // Convert to bits.
-    //     for (int i = 0; i < 8; i++)
-    //     {
-    //         std::cout << "bit " << i << ": " << temp[i] << std::endl;
-    //     }
-    //     bits += temp.to_string();
-    //     std::cout << "bits: " << bits << std::endl;
-    // }
-
+    std::string bits;
+    for (char c: test)
+    {
+        int letter = c;
+        std::cout << "letter " << c << ": " << letter << std::endl;
+        std::bitset<8> temp(letter);    // Convert to bits.
+        for (int i = 0; i < 8; i++)
+        {
+            std::cout << "bit " << i << ": " << temp[i] << std::endl;
+        }
+        bits += temp.to_string();
+        std::cout << "bits: " << bits << std::endl;
+    }
+    */
     // unsigned long long int x = std::numeric_limits<unsigned long long int>::max();
     // std::cout << x << std::endl;
     std::cout << (isBigEndian() ? "Big Endian" : "Little Endian") << std::endl;
 
-    std::string testMD5algorithm = paca::myMD5(test);
-    std::cout << "Result of hashing \'" << test << "\': " << testMD5algorithm << std::endl;
-    test = "The quick brown fox jumps over the lazy dog"; 
-    testMD5algorithm = paca::myMD5(test);
-    std::cout << "Result of hashing \'" << test << "\': " << testMD5algorithm << std::endl;
+
+    std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog"};
+    hashWords(passwords);
     return 0;
 }
