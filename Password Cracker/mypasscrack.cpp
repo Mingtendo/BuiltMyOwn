@@ -20,6 +20,14 @@
     4. Any combination of 1 and 2, plus padding in reverse?
     5. Treat the std::string like bytes and just pad with bytes instead of individual bits.
     6. Any combination of 1, 2, 4, and 5.
+
+    New Idea:
+    The password is already a bunch of bits. Each char in a string is 8 bits or 1 byte. There are
+    512 bits per block, or 64 bytes. We can simply pad by adding 0x80 which is 1 followed by 7 0s.
+    So we just pad by 0x80 and 0x00 until we get a string length of 448 (modulo by 512). We do 
+    padding by converting the input length to uint64_t (auto mods by 2^64), then to a bitset and
+    then into a string. We then split it into 512-bit chunks (may need to change how the chunking
+    is done if it still doesn't work).
 */
 
 // Put in string of chars, and get its form as a vector of bits. 
@@ -32,7 +40,7 @@ std::string paca::string_to_bitstring(std::string const &s)
     {
         int letter = c;
         std::bitset<8> temp(letter);
-        result = temp.to_string()+result;
+        result += temp.to_string();
     }
 
     return result;
