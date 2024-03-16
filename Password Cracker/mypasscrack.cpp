@@ -14,7 +14,7 @@
 /*
     Things to Try:
     I'm like 100% sure this algorithm doesn't work because of how the bits are converted, transformed, and stored.
-    1. Adding the letters in reverse order.
+    X1. Adding the letters in reverse order by appearance ("password" -> "drowssap").
     2. Add the letters in reverse endian order (add each bit to bitset individually), but not reverse appearance order.
     3. Both 1 and 2.
     4. Any combination of 1 and 2, plus padding in reverse?
@@ -32,7 +32,7 @@ std::string paca::string_to_bitstring(std::string const &s)
     {
         int letter = c;
         std::bitset<8> temp(letter);
-        result += temp.to_string();
+        result = temp.to_string()+result;
     }
 
     return result;
