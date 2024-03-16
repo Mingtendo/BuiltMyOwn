@@ -11,7 +11,19 @@
     4. To convert integers into a string of hexadecimal digits, put them into a std::stringstream with std::hex, then pass the stream into a string constructor (and convert the stream into a string).
 */
 
+/*
+    Things to Try:
+    I'm like 100% sure this algorithm doesn't work because of how the bits are converted, transformed, and stored.
+    1. Adding the letters in reverse order.
+    2. Add the letters in reverse endian order (add each bit to bitset individually), but not reverse appearance order.
+    3. Both 1 and 2.
+    4. Any combination of 1 and 2, plus padding in reverse?
+    5. Treat the std::string like bytes and just pad with bytes instead of individual bits.
+    6. Any combination of 1, 2, 4, and 5.
+*/
+
 // Put in string of chars, and get its form as a vector of bits. 
+// TODO: Try adding the chunks backwards? So the bits are in order
 std::string paca::string_to_bitstring(std::string const &s)
 {
     std::string result = "";
