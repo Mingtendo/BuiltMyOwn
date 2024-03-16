@@ -9,6 +9,7 @@
     3a. std::bitset<>[0] is the rightmost bit (smallest bit); opposite of most array-like containers.
     3b. In order to manually turn integer bits (1/0) from a std::vector to a std::bitset, be sure to start at bitset.size()-1 and go backwards to 0 to maintain order.
     4. To convert integers into a string of hexadecimal digits, put them into a std::stringstream with std::hex, then pass the stream into a string constructor (and convert the stream into a string).
+    5. Though bitsets can take strings, they cannot contain chars that are not '1' or '0'.
 */
 
 /*
@@ -81,10 +82,10 @@ uint32_t paca::rotl32(uint32_t n, unsigned int c)
 // Takes in an ASCII string and outputs a 128-bit digest in hex as a string.
 std::string paca::myMD5(std::string const &input)
 {
-    // Convert string into chunks of 512-bit blocks.
-    std::string bits = paca::string_to_bitstring(input);
+    // Store string.
+    std::string bits = input;
 
-    std::cout << "bits of password to process: " << bits << std::endl;
+    // std::cout << "bits of password to process: " << bits << std::endl;
 
     // Pad the string so that it's divisible by 512.
     /*
@@ -96,27 +97,28 @@ std::string paca::myMD5(std::string const &input)
 
    // DONE: How to convert bit string to bits.
    // DONE: Pad the message.
-    uint64_t padding = bits.size();  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
+   // The 64-bit padding length refers to the length of the message in bits (from RFC 1321).
+    uint64_t padding = input.size()*8;  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
     std::cout << "padding: " << padding << std::endl;
 
     std::string to_pad = std::bitset<64>(padding).to_string();
     std::cout << "to_pad: " << to_pad << std::endl;
     
     // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
-    bits += '1';
+    bits += (char) 0x80;
 
-    // Add '0' until message length in bits % 512 == 448.
-    while (bits.size()%512 < 448 || bits.size()%512 > 448)
+    // Add bytes of 0 until we have 8 bytes left.
+    while (bits.size()%64 < 8 || bits.size()%64 > 8)
     {
-        bits += '0';
+        bits += (char) 0x00;
     }
 
-    std::cout << "0-padded bits size: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
+    std::cout << "0-padded bits size: " << bits.size()*8 << ", size%512: " << (bits.size()*8)%512 << std::endl;
 
     // Add padding bits to message.
     bits += to_pad;
 
-    std::cout << "padded to 512-bit multiple: " << bits.size() << ", size%512: " << bits.size()%512 << std::endl;
+    std::cout << "padded to 512-bit multiple: " << bits.size()*8 << ", size%512: " << (bits.size()*8)%512 << std::endl;
     std::cout << "padded message in bits:\n" << bits << std::endl;
 
 

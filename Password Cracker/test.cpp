@@ -57,6 +57,10 @@ int main()
 
 
     std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", ""};
-    hashWords(passwords);
+    // hashWords(passwords);
+    std::cout << "char 0x00: " << (unsigned char) 0x00 << '\n';
+    std::cout << "int 0x00: " << (int) 0x00 << '\n';
+
+    // std::cout << "\'test\' as bit string: " << std::bitset<32>("test") << '\n'; // Illegal
     return 0;
 }
