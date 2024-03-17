@@ -62,5 +62,6 @@ int main()
     std::cout << "int 0x00: " << (int) 0x00 << '\n';
 
     // std::cout << "\'test\' as bit string: " << std::bitset<32>("test") << '\n'; // Illegal
+    std::cout << "unsigned char 'c' to bitset: " << std::bitset<8>((unsigned char) 'c').to_string() << '\n';
     return 0;
 }

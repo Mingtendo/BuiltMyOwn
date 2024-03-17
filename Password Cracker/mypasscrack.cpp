@@ -39,8 +39,7 @@ std::string paca::string_to_bitstring(std::string const &s)
 
     for (unsigned char c: s)
     {
-        int letter = c;
-        std::bitset<8> temp(letter);
+        std::bitset<8> temp(c);
         result += temp.to_string();
     }
 
