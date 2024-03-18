@@ -5,7 +5,7 @@
 bool isBigEndian()
 {
     uint16_t word = 1; // 0x0001
-    uint8_t *firstbyte = (uint8_t*) &word; // points to first byte of word
+    uint8_t *firstbyte = (uint8_t *) &word; // points to first byte of word
     bool biglittle = !(*firstbyte);
     return biglittle;
 }
@@ -53,15 +53,20 @@ int main()
     */
     // unsigned long long int x = std::numeric_limits<unsigned long long int>::max();
     // std::cout << x << std::endl;
-    std::cout << (isBigEndian() ? "Big Endian" : "Little Endian") << std::endl;
-
 
     std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", ""};
-    // hashWords(passwords);
-    std::cout << "char 0x00: " << (unsigned char) 0x00 << '\n';
-    std::cout << "int 0x00: " << (int) 0x00 << '\n';
+    hashWords(passwords);
+    // std::cout << "char 0x00: " << (unsigned char) 0x00 << '\n'; // Shows nothing.
+    // std::cout << "int 0x00: " << (int) 0x00 << '\n';
 
     // std::cout << "\'test\' as bit string: " << std::bitset<32>("test") << '\n'; // Illegal
-    std::cout << "unsigned char 'c' to bitset: " << std::bitset<8>((unsigned char) 'c').to_string() << '\n';
+
+    // These 2 are the same.
+    // std::cout << "unsigned char 'c' to bitset: " << std::bitset<8>((unsigned char) 'c').to_string() << '\n';
+    // std::cout << "unsigned char 0b01100011: " << (unsigned char) 0b01100011 << '\n';
+
+    std::cout << (isBigEndian() ? "Big Endian" : "Little Endian") << std::endl;
+    uint32_t a = 0x0a1a56, b = 0x561a0a;  // 0x0a1a56 is 662102. This is the correct way to store hex nums.
+    std::cout << "a: " << a << "\n" << "b: " << b << "\n";
     return 0;
 }

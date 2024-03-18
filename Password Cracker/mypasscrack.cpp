@@ -29,6 +29,11 @@
     padding by converting the input length to uint64_t (auto mods by 2^64), then to a bitset and
     then into a string. We then split it into 512-bit chunks (may need to change how the chunking
     is done if it still doesn't work).
+
+    New Idea 2:
+    So, hashing '' also yields a wrong result. This means that the problem likely is not caused by the string-to-
+    bitstring conversion, but rather something further down the line. Perhaps the process of dividing the 512-bit
+    bitstrings into 32-bit bitstrings is not correct?
 */
 
 // Put in string of chars, and get its form as a vector of bits. 
@@ -40,6 +45,7 @@ std::string paca::string_to_bitstring(std::string const &s)
     for (unsigned char c: s)
     {
         std::bitset<8> temp(c);
+        // std::cout << "temp: " << temp << ", temp.to_string(): " << temp.to_string() << '\n';
         result += temp.to_string();
     }
 
@@ -51,6 +57,19 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
 {
     std::vector<std::bitset<32>> result;
     std::string huge_string = huge.to_string();
+
+    // std::size_t i = 0;
+    // while (i < huge.size())
+    // {
+    //     std::bitset<32> chunka;
+    //     for (int j = 0; j < 32; j++)
+    //     {
+    //         chunka[j] = huge[i];
+    //         i++;
+    //     }
+    //     std::cout << "chunka: " << chunka << "\n";
+    //     result.push_back(chunka);
+    // }
 
     for (std::size_t i = 0; i < huge_string.size(); i+=32)
     {
@@ -70,6 +89,9 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
     DONE: NO FURTHER TESTING NEEDED.
     WHY: Did not change the hash output (even though the hashes are wrong).
 */ 
+/// \param n the 32-bit integer to rotate
+/// \param c the number of bits to rotate by
+/// \return the integer rotated by that many bits
 uint32_t paca::rotl32(uint32_t n, unsigned int c)
 {
     const unsigned int mask = (CHAR_BIT*sizeof(n)-1);
@@ -82,9 +104,8 @@ uint32_t paca::rotl32(uint32_t n, unsigned int c)
 std::string paca::myMD5(std::string const &input)
 {
     // Store string.
-    std::string bits = input;
-
-    // std::cout << "bits of password to process: " << bits << std::endl;
+    std::string bitstring = paca::string_to_bitstring(input);
+    std::cout << "bits of password to process:\n" << bitstring << std::endl;
 
     // Pad the string so that it's divisible by 512.
     /*
@@ -104,32 +125,33 @@ std::string paca::myMD5(std::string const &input)
     std::cout << "to_pad: " << to_pad << std::endl;
     
     // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
-    bits += (char) 0x80;
+    bitstring += '1';
 
     // Add bytes of 0 until we have 8 bytes left.
-    while (bits.size()%64 < 8 || bits.size()%64 > 8)
+    while (bitstring.size()%512 != 448)
     {
-        bits += (char) 0x00;
+        bitstring += '0';
     }
 
-    std::cout << "0-padded bits size: " << bits.size()*8 << ", size%512: " << (bits.size()*8)%512 << std::endl;
+    std::cout << "0-padded bits size: " << bitstring.size() << ", size%512: " << (bitstring.size())%512 << std::endl;
 
     // Add padding bits to message.
-    bits += to_pad;
+    bitstring += to_pad;
 
-    std::cout << "padded to 512-bit multiple: " << bits.size()*8 << ", size%512: " << (bits.size()*8)%512 << std::endl;
-    std::cout << "padded message in bits:\n" << bits << std::endl;
+    std::cout << "padded to 512-bit multiple: " << bitstring.size() << ", size%512: " << (bitstring.size())%512 << std::endl;
+    std::cout << "padded message in bits:\n" << bitstring << std::endl;
 
 
 
     // DONE: Break into 512-bit chunks.
     std::vector<std::bitset<512>> allInputBits;
 
-    for (std::size_t chunk = 0; chunk < bits.size(); chunk+=512)
+    for (std::size_t chunk = 0; chunk < bitstring.size(); chunk+=512)
     {
-        std::bitset<512> to_push(bits.substr(chunk, 512));  // Automatic conversion of bit string to bits.
+        std::string subbits = bitstring.substr(chunk, 512);
+        std::bitset<512> to_push(subbits);  // Automatic conversion of bit string to bits.
         allInputBits.push_back(to_push);
-        std::cout << "chunk " << chunk/512 << ":\n" << to_push << std::endl;
+        std::cout << "512-bit chunk " << chunk/512 << ":\n" << to_push << "\nsubbits:\n" << subbits << std::endl;
     }
 
     // MAIN ALGORITHM
@@ -182,7 +204,7 @@ std::string paca::myMD5(std::string const &input)
         uint32_t A = a0, B = b0, C = c0, D = d0;
         
         // Calculate hashes for this chunk.
-        for (unsigned int i = 0; i < 64; i++)
+        for (uint32_t i = 0; i < 64; i++)
         {
             uint32_t F, g;
             if (0 <= i && i <= 15)
