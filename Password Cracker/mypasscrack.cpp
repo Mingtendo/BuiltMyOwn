@@ -114,7 +114,8 @@ std::vector<uint8_t> paca::turn64b_to_eight8b(const uint64_t &huge)
     return result;
 }
 
-std::vector<std::array<uint32_t, 16>> separate_into_16(std::vector<uint8_t> &bytesVector)
+// Code here inspired from: https://forum.arduino.cc/t/convert-4-uint8_t-into-one-uint32_t/577243/2. 
+std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t> &bytesVector)
 {
     std::vector<std::array<uint32_t, 16>> result;
     size_t pointer = 0;
