@@ -68,5 +68,13 @@ int main()
     std::cout << (isBigEndian() ? "Big Endian" : "Little Endian") << std::endl;
     uint32_t a = 0x0a1a56, b = 0x561a0a;  // 0x0a1a56 is 662102. This is the correct way to store hex nums.
     std::cout << "a: " << a << "\n" << "b: " << b << "\n";
+
+    uint64_t bigguy = 8;
+    std::vector<uint8_t> bytes = paca::turn64b_to_eight8b(bigguy);
+    for (uint8_t a: bytes)
+    {
+        std::cout << a << '\n';
+    }
+    std::cout << std::endl;
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "mypasscrack.hpp"
 #include <iostream>
 #include <sstream>
+#include <array>
 
 /*
     Things Learned So Far:
@@ -38,15 +39,13 @@
 
 // Put in string of chars, and get its form as a vector of bits. 
 // TODO: Try adding the chunks backwards? So the bits are in order
-std::string paca::string_to_bitstring(std::string const &s)
+std::vector<uint8_t> paca::string_to_bitstring(std::string const &s)
 {
-    std::string result = "";
+    std::vector<uint8_t> result;
 
-    for (unsigned char c: s)
+    for (uint8_t c: s)
     {
-        std::bitset<8> temp(c);
-        // std::cout << "temp: " << temp << ", temp.to_string(): " << temp.to_string() << '\n';
-        result += temp.to_string();
+        result.push_back(c);
     }
 
     return result;
@@ -74,8 +73,8 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
     for (std::size_t i = 0; i < huge_string.size(); i+=32)
     {
         std::string chunk = huge_string.substr(i, 32);
-        // std::cout << "chunk " << i/32 << ": " << chunk << std::endl;
         result.push_back(std::bitset<32>(chunk));
+        std::cout << "chunk " << i/32 << ": " << chunk << std::endl;
     }
 
     return result;
@@ -100,12 +99,53 @@ uint32_t paca::rotl32(uint32_t n, unsigned int c)
     return (n<<c)|(n>>((-c)&mask));
 }
 
+// See source for this code: https://stackoverflow.com/a/35153234.
+/// @brief Takes a 64-bit integer and splits it into 8 bytes. Endian-agnositc.
+/// @param huge 
+/// @return std::vector containing 8 unsigned 8-bit ints (same as unsigned char)
+std::vector<uint8_t> paca::turn64b_to_eight8b(const uint64_t &huge)
+{
+    std::vector<uint8_t> result(8);
+    for (int i = 0; i < 8; i++)
+    {
+        result[i] = uint8_t((huge>>8*(7 - i)) & 0xFF);
+    }
+
+    return result;
+}
+
+std::vector<std::array<uint32_t, 16>> separate_into_16(std::vector<uint8_t> &bytesVector)
+{
+    std::vector<std::array<uint32_t, 16>> result;
+    size_t pointer = 0;
+    while (pointer < bytesVector.size())
+    {
+        std::array<uint32_t, 16> temp;
+        for (int i = 0; i < 16; i++)
+        {
+            uint8_t buffer[4];
+            // Create buffer of four bytes.
+            for (int j = 0; j < 4; j++)
+            {
+                buffer[j] = bytesVector[pointer+j];   
+            }
+            // Create new 32-bit value from uint8_t[4].
+            // uint32_t newvalue = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+            uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+            temp[i] = newvalue;
+            pointer += 4;
+        }
+        result.push_back(temp);
+    }
+
+    return result;
+}
+
 // Takes in an ASCII string and outputs a 128-bit digest in hex as a string.
 std::string paca::myMD5(std::string const &input)
 {
     // Store string.
-    std::string bitstring = paca::string_to_bitstring(input);
-    std::cout << "bits of password to process:\n" << bitstring << std::endl;
+    std::vector<uint8_t> bitstring = paca::string_to_bitstring(input);
 
     // Pad the string so that it's divisible by 512.
     /*
@@ -120,39 +160,30 @@ std::string paca::myMD5(std::string const &input)
    // The 64-bit padding length refers to the length of the message in bits (from RFC 1321).
     uint64_t padding = input.size()*8;  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
     std::cout << "padding: " << padding << std::endl;
-
-    std::string to_pad = std::bitset<64>(padding).to_string();
-    std::cout << "to_pad: " << to_pad << std::endl;
     
     // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
-    bitstring += '1';
+    uint8_t one = 0x80, zero = 0x00;
+    bitstring.push_back(one);
 
     // Add bytes of 0 until we have 8 bytes left.
-    while (bitstring.size()%512 != 448)
+    while (bitstring.size()%64 != 56)
     {
-        bitstring += '0';
+        bitstring.push_back(zero);
     }
 
     std::cout << "0-padded bits size: " << bitstring.size() << ", size%512: " << (bitstring.size())%512 << std::endl;
 
     // Add padding bits to message.
-    bitstring += to_pad;
-
-    std::cout << "padded to 512-bit multiple: " << bitstring.size() << ", size%512: " << (bitstring.size())%512 << std::endl;
-    std::cout << "padded message in bits:\n" << bitstring << std::endl;
-
-
-
-    // DONE: Break into 512-bit chunks.
-    std::vector<std::bitset<512>> allInputBits;
-
-    for (std::size_t chunk = 0; chunk < bitstring.size(); chunk+=512)
+    std::vector<uint8_t> to_pad = paca::turn64b_to_eight8b(padding);
+    for (uint8_t byte: to_pad)
     {
-        std::string subbits = bitstring.substr(chunk, 512);
-        std::bitset<512> to_push(subbits);  // Automatic conversion of bit string to bits.
-        allInputBits.push_back(to_push);
-        std::cout << "512-bit chunk " << chunk/512 << ":\n" << to_push << "\nsubbits:\n" << subbits << std::endl;
+        bitstring.push_back(byte);
     }
+
+    std::cout << "padded to 512-bit multiple: " << bitstring.size()*8 << ", size%512: " << (bitstring.size()*8)%512 << std::endl;
+
+    // DONE: Break into arrays containing 16 32-bit words each.
+    std::vector<std::array<uint32_t, 16>> allInputBits = separate_into_16(bitstring);
 
     // MAIN ALGORITHM
     // Initial variables
@@ -198,9 +229,8 @@ std::string paca::myMD5(std::string const &input)
         <<=X Shift left by X bits, assign
         >>=X Shift right by X bits, assign
     */
-    for (std::bitset<512> bs: allInputBits)
+    for (std::array<uint32_t, 16> M: allInputBits)
     {
-        std::vector<std::bitset<32>> M = chunk512_to_chunk32(bs);
         uint32_t A = a0, B = b0, C = c0, D = d0;
         
         // Calculate hashes for this chunk.
@@ -228,8 +258,7 @@ std::string paca::myMD5(std::string const &input)
                 g = (7*i)%16;
             }
 
-            uint32_t cur = M[g].to_ulong();
-            F = F+A+K[i]+cur;
+            F = F+A+K[i]+M[g];
             A = D;
             D = C;
             C = B;
