@@ -100,15 +100,29 @@ uint32_t paca::rotl32(uint32_t n, unsigned int c)
 }
 
 // See source for this code: https://stackoverflow.com/a/35153234.
-/// @brief Takes a 64-bit integer and splits it into 8 bytes. Endian-agnositc.
+/// @brief Takes a 64-bit integer and splits it into 8 bytes. Endian-agnostic.
 /// @param huge 
 /// @return std::vector containing 8 unsigned 8-bit ints (same as unsigned char)
-std::vector<uint8_t> paca::turn64b_to_eight8b(const uint64_t &huge)
+std::vector<uint8_t> paca::uint64_t_to_vector(const uint64_t &huge)
 {
-    std::vector<uint8_t> result(8);
-    for (int i = 0; i < 8; i++)
+    std::vector<uint8_t> result(sizeof(uint64_t));
+    for (size_t i = 0; i < sizeof(uint64_t); i++)
     {
         result[i] = uint8_t((huge>>8*(7 - i)) & 0xFF);
+    }
+
+    return result;
+}
+
+// Code by ChatGPT.
+/// @param huge an unsigned 64-bit integer
+/// @return std::vector containing 8 unsigned 8-bit ints in little endian
+std::vector<uint8_t> paca::uint64_t_to_vector_chatgpt(uint64_t huge)
+{
+    std::vector<uint8_t> result(sizeof(uint64_t));
+    for (size_t i = 0; i < sizeof(uint64_t); i++)
+    {
+        result[sizeof(uint64_t)-i-1] = (huge>>(i*8)) & 0xFF;
     }
 
     return result;
@@ -130,7 +144,7 @@ std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t
             {
                 buffer[j] = bytesVector[pointer+j];   
             }
-            // Create new 32-bit value from uint8_t[4].
+            // Create new 32-bit value from uint8_t[4]. Top line is little-endian, bot line is big-endian.
             // uint32_t newvalue = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
             uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
             temp[i] = newvalue;
@@ -175,7 +189,7 @@ std::string paca::myMD5(std::string const &input)
     std::cout << "0-padded bits size: " << bitstring.size() << ", size%512: " << (bitstring.size())%512 << std::endl;
 
     // Add padding bits to message.
-    std::vector<uint8_t> to_pad = paca::turn64b_to_eight8b(padding);
+    std::vector<uint8_t> to_pad = paca::uint64_t_to_vector_chatgpt(padding);
     for (uint8_t byte: to_pad)
     {
         bitstring.push_back(byte);
