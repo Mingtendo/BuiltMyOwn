@@ -11,6 +11,8 @@
     3b. In order to manually turn integer bits (1/0) from a std::vector to a std::bitset, be sure to start at bitset.size()-1 and go backwards to 0 to maintain order.
     4. To convert integers into a string of hexadecimal digits, put them into a std::stringstream with std::hex, then pass the stream into a string constructor (and convert the stream into a string).
     5. Though bitsets can take strings, they cannot contain chars that are not '1' or '0'.
+    6. How to bitshift and mask integers.
+    7. How to break a 64-bit uint into 8 8-bit uints.
 */
 
 /*
