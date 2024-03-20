@@ -204,10 +204,10 @@ std::string paca::myMD5(std::string const &input)
 
     // MAIN ALGORITHM
     // Initial variables
-    uint32_t a0 = 0x67452301;
-    uint32_t b0 = 0xefcdab89;
-    uint32_t c0 = 0x98badcfe;
-    uint32_t d0 = 0x10325476;
+    uint32_t a0 = 0x01234567;
+    uint32_t b0 = 0x89abcdef;
+    uint32_t c0 = 0xfedcba98;
+    uint32_t d0 = 0x76543210;
     // Specifies per-round shift amounts. Taken from Wikipedia.
     uint32_t s[64] = 
     {
