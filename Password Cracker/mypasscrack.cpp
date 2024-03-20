@@ -124,7 +124,8 @@ std::vector<uint8_t> paca::uint64_t_to_vector_chatgpt(uint64_t huge)
     std::vector<uint8_t> result(sizeof(uint64_t));
     for (size_t i = 0; i < sizeof(uint64_t); i++)
     {
-        result[sizeof(uint64_t)-i-1] = (huge>>(i*8)) & 0xFF;
+        result[i] = (huge>>(i*8)) & 0xFF;
+        std::cout << "result[" << sizeof(uint64_t)-i-1 << "]: " << result[sizeof(uint64_t)-i-1] << "\n";
     }
 
     return result;
@@ -203,7 +204,7 @@ std::string paca::myMD5(std::string const &input)
     std::vector<std::array<uint32_t, 16>> allInputBits = separate_into_16(bitstring);
 
     // MAIN ALGORITHM
-    // Initial variables
+    // Initial variables; written normally. These do NOT need to be in little endian, as they are supposed to be regular numbers.
     uint32_t a0 = 0x01234567;
     uint32_t b0 = 0x89abcdef;
     uint32_t c0 = 0xfedcba98;
