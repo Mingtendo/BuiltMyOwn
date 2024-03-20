@@ -189,7 +189,7 @@ std::string paca::myMD5(std::string const &input)
         bitstring.push_back(zero);
     }
 
-    std::cout << "0-padded bits size: " << bitstring.size() << ", size%512: " << (bitstring.size())%512 << std::endl;
+    std::cout << "0-padded bits size: " << bitstring.size() << ", size%64: " << (bitstring.size())%64 << std::endl;
 
     // Add padding bits to message.
     std::vector<uint8_t> to_pad = paca::uint64_t_to_vector_chatgpt(padding);
