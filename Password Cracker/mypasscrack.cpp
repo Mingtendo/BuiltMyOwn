@@ -116,9 +116,9 @@ std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t
             for (int j = 0; j < 4; j++)
             {
                 buffer[j] = bytesVector[pointer+j];
-                std::cout << std::hex << buffer[j] << " ";   
+                // std::cout << std::hex << buffer[j] << " ";   
             }
-            std::cout << '\n';
+            // std::cout << '\n';
             // Create new 32-bit value from uint8_t[4]. Top two lines are little-endian, last line is big-endian.
             // uint32_t newvalue = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
             uint32_t newvalue = (uint32_t) buffer[0] | (uint32_t)(buffer[1] << 8) | (uint32_t)(buffer[2] << 16) | (uint32_t)(buffer[3] << 24);
@@ -168,7 +168,8 @@ std::string paca::myMD5(std::string const &input)
    // DONE: Pad the message.
    // The 64-bit padding length refers to the length of the message in bits (from RFC 1321).
     uint64_t padding = input.size()*8;  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
-    std::cout << "padding: " << padding << std::endl;
+    
+    // std::cout << "padding: " << padding << std::endl;
     
     // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
     uint8_t one = 0x80, zero = 0x00;
@@ -180,7 +181,7 @@ std::string paca::myMD5(std::string const &input)
         bitstring.push_back(zero);
     }
 
-    std::cout << "0x00-padded bitstring size: " << bitstring.size() << ", size%64: " << (bitstring.size())%64 << std::endl;
+    // std::cout << "0x00-padded bitstring size: " << bitstring.size() << ", size%64: " << (bitstring.size())%64 << std::endl;
 
     // Add padding bits to message.
     std::vector<uint8_t> to_pad = paca::uint64_t_to_vector_chatgpt(padding);
@@ -189,7 +190,7 @@ std::string paca::myMD5(std::string const &input)
         bitstring.push_back(byte);
     }
 
-    std::cout << "padded to 512-bit multiple: " << bitstring.size()*8 << ", size%512: " << (bitstring.size()*8)%512 << std::endl;
+    // std::cout << "padded to 512-bit multiple: " << bitstring.size()*8 << ", size%512: " << (bitstring.size()*8)%512 << std::endl;
 
     // Check each in bitstring.
     // for (size_t i = 0; i < bitstring.size(); i++)

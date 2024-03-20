@@ -69,7 +69,7 @@ int main()
     // unsigned long long int x = std::numeric_limits<unsigned long long int>::max();
     // std::cout << x << std::endl;
 
-    std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", ""};
+    std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", "", "abc"};
     hashWords(passwords);
     // std::cout << "char 0x00: " << (unsigned char) 0x00 << '\n'; // Shows nothing.
     // std::cout << "int 0x00: " << (int) 0x00 << '\n';
@@ -84,13 +84,13 @@ int main()
     // uint32_t a = 0x0a1a56, b = 0x561a0a;  // 0x0a1a56 is 662102. This is the correct way to store hex nums.
     // std::cout << "a: " << a << "\n" << "b: " << b << "\n";
 
-    uint32_t testA = 0xd98c1dd4;
-    uint32_t testA_result = paca::uint32_t_little_to_big_endian(testA);
+    // uint32_t testA = 0xd98c1dd4;
+    // uint32_t testA_result = paca::uint32_t_little_to_big_endian(testA);
 
-    std::stringstream ss;
-    ss << std::hex << testA_result;
-    std::string converted(ss.str());
-    std::cout << converted << std::endl;
+    // std::stringstream ss;
+    // ss << std::hex << testA_result;
+    // std::string converted(ss.str());
+    // std::cout << converted << std::endl;
     
     return 0;
 }
