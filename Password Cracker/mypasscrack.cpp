@@ -125,7 +125,7 @@ std::vector<uint8_t> paca::uint64_t_to_vector_chatgpt(uint64_t huge)
     for (size_t i = 0; i < sizeof(uint64_t); i++)
     {
         result[i] = (huge>>(i*8)) & 0xFF;
-        std::cout << "result[" << sizeof(uint64_t)-i-1 << "]: " << result[sizeof(uint64_t)-i-1] << "\n";
+        // std::cout << "result[" << sizeof(uint64_t)-i-1 << "]: " << result[sizeof(uint64_t)-i-1] << "\n";
     }
 
     return result;
@@ -139,18 +139,23 @@ std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t
     while (pointer < bytesVector.size())
     {
         std::array<uint32_t, 16> temp;
-        for (int i = 0; i < 16; i++)
+        int i = 0;
+        while (i < 16 && pointer < bytesVector.size())
         {
             uint8_t buffer[4];
             // Create buffer of four bytes.
             for (int j = 0; j < 4; j++)
             {
-                buffer[j] = bytesVector[pointer+j];   
+                buffer[j] = bytesVector[pointer+j];
+                std::cout << std::hex << buffer[j] << " ";   
             }
+            std::cout << '\n';
             // Create new 32-bit value from uint8_t[4]. Top line is little-endian, bot line is big-endian.
-            // uint32_t newvalue = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
-            uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
+            uint32_t newvalue = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+            // uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
             temp[i] = newvalue;
+            std::cout << "newvalue " << std::dec << i << ": " << std::hex << newvalue << '\n' << std::dec;
+            i++;
             pointer += 4;
         }
         result.push_back(temp);
@@ -189,7 +194,7 @@ std::string paca::myMD5(std::string const &input)
         bitstring.push_back(zero);
     }
 
-    std::cout << "0-padded bits size: " << bitstring.size() << ", size%64: " << (bitstring.size())%64 << std::endl;
+    std::cout << "0x00-padded bitstring size: " << bitstring.size() << ", size%64: " << (bitstring.size())%64 << std::endl;
 
     // Add padding bits to message.
     std::vector<uint8_t> to_pad = paca::uint64_t_to_vector_chatgpt(padding);
@@ -200,15 +205,21 @@ std::string paca::myMD5(std::string const &input)
 
     std::cout << "padded to 512-bit multiple: " << bitstring.size()*8 << ", size%512: " << (bitstring.size()*8)%512 << std::endl;
 
+    // Check each in bitstring.
+    for (size_t i = 0; i < bitstring.size(); i++)
+    {
+        std::cout << "bitstring[" << i << "]: " << bitstring[i] << '\n';
+    }
+
     // DONE: Break into arrays containing 16 32-bit words each.
     std::vector<std::array<uint32_t, 16>> allInputBits = separate_into_16(bitstring);
 
     // MAIN ALGORITHM
-    // Initial variables; written normally. These do NOT need to be in little endian, as they are supposed to be regular numbers.
-    uint32_t a0 = 0x01234567;
-    uint32_t b0 = 0x89abcdef;
-    uint32_t c0 = 0xfedcba98;
-    uint32_t d0 = 0x76543210;
+    // Initial variables; written normally. These DO need to be in little endian, as they are supposed to be regular numbers.
+    uint32_t a0 = 0x67452301;
+    uint32_t b0 = 0xefcdab89;
+    uint32_t c0 = 0x98badcfe;
+    uint32_t d0 = 0x10325476;
     // Specifies per-round shift amounts. Taken from Wikipedia.
     uint32_t s[64] = 
     {
