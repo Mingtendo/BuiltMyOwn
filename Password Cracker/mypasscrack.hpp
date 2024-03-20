@@ -14,6 +14,7 @@ namespace paca
     std::vector<uint8_t> uint64_t_to_vector(const uint64_t &huge);
     std::vector<std::array<uint32_t, 16>> separate_into_16(std::vector<uint8_t> &bytesVector);
     std::vector<uint8_t> uint64_t_to_vector_chatgpt(uint64_t huge);
+    uint32_t uint32_t_little_to_big_endian(uint32_t bytes);
 }
 
 #endif

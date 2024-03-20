@@ -1,5 +1,6 @@
 #include "mypasscrack.hpp"
 #include <iostream>
+#include <sstream>
 #include <limits>
 
 bool isBigEndian()
@@ -83,6 +84,13 @@ int main()
     // uint32_t a = 0x0a1a56, b = 0x561a0a;  // 0x0a1a56 is 662102. This is the correct way to store hex nums.
     // std::cout << "a: " << a << "\n" << "b: " << b << "\n";
 
+    uint32_t testA = 0xd98c1dd4;
+    uint32_t testA_result = paca::uint32_t_little_to_big_endian(testA);
+
+    std::stringstream ss;
+    ss << std::hex << testA_result;
+    std::string converted(ss.str());
+    std::cout << converted << std::endl;
     
     return 0;
 }

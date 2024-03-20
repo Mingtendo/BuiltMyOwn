@@ -13,11 +13,12 @@
     5. Though bitsets can take strings, they cannot contain chars that are not '1' or '0'.
     6. How to bitshift and mask integers.
     7. How to break a 64-bit uint into 8 8-bit uints.
+    8. At the end, gotta turn the little-endian bytes into big-endian bytes to display them in the correct order.
 */
 
 /*
     Things to Try:
-    Convert the array of bytes into 32-bit chunks, and THEN turn them into little-endian format.
+    Nothing, it actually works!!!
 */
 
 // Put in string of chars, and get its form as a vector of bits. 
@@ -69,7 +70,7 @@ uint32_t paca::rotl32(uint32_t n, unsigned int c)
     return (n<<c)|(n>>((-c)&mask));
 }
 
-// See source for this code: https://stackoverflow.com/a/35153234.
+// UNUSED. See source for this code: https://stackoverflow.com/a/35153234.
 /// @brief Takes a 64-bit integer and splits it into 8 bytes. Endian-agnostic.
 /// @param huge 
 /// @return std::vector containing 8 unsigned 8-bit ints (same as unsigned char)
@@ -123,7 +124,7 @@ std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t
             uint32_t newvalue = (uint32_t) buffer[0] | (uint32_t)(buffer[1] << 8) | (uint32_t)(buffer[2] << 16) | (uint32_t)(buffer[3] << 24);
             // uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
             temp[i] = newvalue;
-            std::cout << "newvalue " << std::dec << i << ": " << std::hex << newvalue << '\n' << std::dec;
+            // std::cout << "newvalue " << std::dec << i << ": " << std::hex << newvalue << '\n' << std::dec;
             i++;
             pointer += 4;
         }
@@ -131,6 +132,22 @@ std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t
     }
 
     return result;
+}
+
+/// @brief Swaps the bytes around so that little endian bytes are re-ordered to big endian.
+/// @param bytes takes in a uint32_t
+/// @returns the bytes reordered in big endian
+uint32_t paca::uint32_t_little_to_big_endian(uint32_t bytes)
+{
+    uint8_t temp[4];
+    for (int i = 0; i < 4; i++)
+    {
+        temp[i] = (bytes >> (i*8)) & 0xFF;
+        // std::cout << std::hex << temp[i] << "\n";    // Doesn't actually display in hex.
+    }
+
+    uint32_t reformed = temp[3] | (temp[2] << 8) | (temp[1] << 16) | (temp[0] << 24);
+    return reformed;
 }
 
 // Takes in an ASCII string and outputs a 128-bit digest in hex as a string.
@@ -175,10 +192,10 @@ std::string paca::myMD5(std::string const &input)
     std::cout << "padded to 512-bit multiple: " << bitstring.size()*8 << ", size%512: " << (bitstring.size()*8)%512 << std::endl;
 
     // Check each in bitstring.
-    for (size_t i = 0; i < bitstring.size(); i++)
-    {
-        std::cout << "bitstring[" << i << "]: " << bitstring[i] << '\n';
-    }
+    // for (size_t i = 0; i < bitstring.size(); i++)
+    // {
+    //     std::cout << "bitstring[" << i << "]: " << bitstring[i] << '\n';
+    // }
 
     // DONE: Break into arrays containing 16 32-bit words each.
     std::vector<std::array<uint32_t, 16>> allInputBits = paca::separate_into_16(bitstring);
@@ -261,7 +278,7 @@ std::string paca::myMD5(std::string const &input)
                 F = C^(B|(~D));
                 g = (7*i)%16;
             }
-            // std::cout<< "Size of M[g]: " << sizeof(M[g]) << "\n";
+            // std::cout<< "M[" << g << "]: " << std::hex << M[g] << std::dec << "\n";
             F = F+A+K[i]+M[g];
             A = D;
             D = C;
@@ -277,7 +294,12 @@ std::string paca::myMD5(std::string const &input)
     }
 
     std::stringstream strings;
-    strings << std::hex << a0 << b0 << c0 << d0;
+    uint32_t bigEnd_a0, bigEnd_b0, bigEnd_c0, bigEnd_d0;
+    bigEnd_a0 = paca::uint32_t_little_to_big_endian(a0);
+    bigEnd_b0 = paca::uint32_t_little_to_big_endian(b0);
+    bigEnd_c0 = paca::uint32_t_little_to_big_endian(c0);
+    bigEnd_d0 = paca::uint32_t_little_to_big_endian(d0);
+    strings << std::hex << bigEnd_a0 << bigEnd_b0 << bigEnd_c0 << bigEnd_d0;
     std::string digest(strings.str());
 
     return digest;
