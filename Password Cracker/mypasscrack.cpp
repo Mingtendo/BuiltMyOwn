@@ -17,26 +17,7 @@
 
 /*
     Things to Try:
-    I'm like 100% sure this algorithm doesn't work because of how the bits are converted, transformed, and stored.
-    X1. Adding the letters in reverse order by appearance ("password" -> "drowssap").
-    2. Add the letters in reverse endian order (add each bit to bitset individually), but not reverse appearance order.
-    3. Both 1 and 2.
-    4. Any combination of 1 and 2, plus padding in reverse?
-    5. Treat the std::string like bytes and just pad with bytes instead of individual bits.
-    6. Any combination of 1, 2, 4, and 5.
-
-    New Idea:
-    The password is already a bunch of bits. Each char in a string is 8 bits or 1 byte. There are
-    512 bits per block, or 64 bytes. We can simply pad by adding 0x80 which is 1 followed by 7 0s.
-    So we just pad by 0x80 and 0x00 until we get a string length of 448 (modulo by 512). We do 
-    padding by converting the input length to uint64_t (auto mods by 2^64), then to a bitset and
-    then into a string. We then split it into 512-bit chunks (may need to change how the chunking
-    is done if it still doesn't work).
-
-    New Idea 2:
-    So, hashing '' also yields a wrong result. This means that the problem likely is not caused by the string-to-
-    bitstring conversion, but rather something further down the line. Perhaps the process of dividing the 512-bit
-    bitstrings into 32-bit bitstrings is not correct?
+    Convert the array of bytes into 32-bit chunks, and THEN turn them into little-endian format.
 */
 
 // Put in string of chars, and get its form as a vector of bits. 
@@ -58,19 +39,6 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
 {
     std::vector<std::bitset<32>> result;
     std::string huge_string = huge.to_string();
-
-    // std::size_t i = 0;
-    // while (i < huge.size())
-    // {
-    //     std::bitset<32> chunka;
-    //     for (int j = 0; j < 32; j++)
-    //     {
-    //         chunka[j] = huge[i];
-    //         i++;
-    //     }
-    //     std::cout << "chunka: " << chunka << "\n";
-    //     result.push_back(chunka);
-    // }
 
     for (std::size_t i = 0; i < huge_string.size(); i+=32)
     {
@@ -116,7 +84,7 @@ std::vector<uint8_t> paca::uint64_t_to_vector(const uint64_t &huge)
     return result;
 }
 
-// Code by ChatGPT.
+// Modified code from ChatGPT. Stores result in little-endian.
 /// @param huge an unsigned 64-bit integer
 /// @return std::vector containing 8 unsigned 8-bit ints in little endian
 std::vector<uint8_t> paca::uint64_t_to_vector_chatgpt(uint64_t huge)
@@ -152,7 +120,7 @@ std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t
             std::cout << '\n';
             // Create new 32-bit value from uint8_t[4]. Top two lines are little-endian, last line is big-endian.
             // uint32_t newvalue = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
-            uint32_t newvalue = buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+            uint32_t newvalue = (uint32_t) buffer[0] | (uint32_t)(buffer[1] << 8) | (uint32_t)(buffer[2] << 16) | (uint32_t)(buffer[3] << 24);
             // uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
             temp[i] = newvalue;
             std::cout << "newvalue " << std::dec << i << ": " << std::hex << newvalue << '\n' << std::dec;
@@ -213,10 +181,10 @@ std::string paca::myMD5(std::string const &input)
     }
 
     // DONE: Break into arrays containing 16 32-bit words each.
-    std::vector<std::array<uint32_t, 16>> allInputBits = separate_into_16(bitstring);
+    std::vector<std::array<uint32_t, 16>> allInputBits = paca::separate_into_16(bitstring);
 
     // MAIN ALGORITHM
-    // Initial variables; written normally. These DO need to be in little endian, as they are supposed to be regular numbers.
+    // Initial variables; written normally. These DO need to be in little endian.
     uint32_t a0, b0, c0, d0;
     a0 = 0x67452301;
     b0 = 0xefcdab89;
@@ -293,7 +261,7 @@ std::string paca::myMD5(std::string const &input)
                 F = C^(B|(~D));
                 g = (7*i)%16;
             }
-
+            // std::cout<< "Size of M[g]: " << sizeof(M[g]) << "\n";
             F = F+A+K[i]+M[g];
             A = D;
             D = C;
