@@ -18,7 +18,7 @@ MD5 ("") = d41d8cd98f00b204e9800998ecf8427e
 using ints: 227b7f48d21283f63bc9bbc15b44ea1a
 fixed padding endianness, fixed construction of 16x32-bit chunks: 2520df5474d1b17877bf08654076c48
 
-MD5 ("a") = 0cc175b9c0f1b6a831c399e269772661
+MD5 ("a") = cc175b9c0f1b6a831c399e269772661
 MD5 ("abc") = 900150983cd24fb0d6963f7d28e17f72
 
 MD5 ("password") = 5f4dcc3b5aa765d61d8327deb882cf99
@@ -47,8 +47,56 @@ void hashWords(std::vector<std::string> &passwords)
     }
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc > 3)
+    {
+        std::cout << "Sorry, can't use spaces in passwords. Try again." << std::endl;
+        return 1;
+    }
+
+    // I know this design is garbage but it'll work for now.
+    if (argc == 1)
+    {
+        std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", "", "abc"};
+        hashWords(passwords);
+    }
+
+    if (argc == 2)
+    {
+        std::string arg1(argv[1]);
+        if (arg1 == "-help")
+        {
+            std::cout << "-help                     display this message \n";
+            std::cout << "-hash [password]          [alias -h] produces MD5 hash of password \n";
+            std::cout << "Using no parameter input displays hashes of test strings." << std::endl;
+        }
+        else
+        {
+            std::cout << "Flag not found. Please use -help for more info." << std::endl;
+            return 1;
+        }
+    }
+
+    if (argc == 3)
+    {
+        std::string arg1(argv[1]);
+        std::string password(argv[2]);
+
+        if (arg1 == "-hash" || arg1 == "-h")
+        {
+            std::vector<std::string> tohash = {password};
+            hashWords(tohash);
+        }
+        else
+        {
+            std::cout << "Flag not found. Please use -help for more info." << std::endl;
+            return 1;
+        }
+    }
+
+    
+    // This is all stuff I learned or used to learn. Keeping for posterity.
     // Can't copy a string into a bitset. Must be converted to char first, and then bits.
     /* 
     std::string test = "password";
@@ -69,8 +117,6 @@ int main()
     // unsigned long long int x = std::numeric_limits<unsigned long long int>::max();
     // std::cout << x << std::endl;
 
-    std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", "", "abc"};
-    hashWords(passwords);
     // std::cout << "char 0x00: " << (unsigned char) 0x00 << '\n'; // Shows nothing.
     // std::cout << "int 0x00: " << (int) 0x00 << '\n';
 
