@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include <array>
+#include <cassert>
 
 /*
     Things Learned So Far:
@@ -103,6 +104,7 @@ std::vector<uint8_t> paca::uint64_t_to_vector_chatgpt(uint64_t huge)
 /// @return std::vector containing arrays of 16 32-bit words each stored in little-endian order (assumes input bytes are big-endian order)
 std::vector<std::array<uint32_t, 16>> paca::combine_into_little_endian_32_bit_words(std::vector<uint8_t> &bytesVector)
 {
+    assert(bytesVector.size()%64 == 0);
     std::vector<std::array<uint32_t, 16>> result;
     size_t pointer = 0;
     while (pointer < bytesVector.size())
