@@ -91,6 +91,11 @@ int main()
     // ss << std::hex << testA_result;
     // std::string converted(ss.str());
     // std::cout << converted << std::endl;
+
+    // Create new 32-bit value from uint8_t[4]. Top two lines are little-endian, last line is big-endian.
+    // uint32_t newvalue = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+    // uint32_t newvalue = (uint32_t) buffer[0] | (uint32_t)(buffer[1] << 8) | (uint32_t)(buffer[2] << 16) | (uint32_t)(buffer[3] << 24);
+    // uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
     
     return 0;
 }

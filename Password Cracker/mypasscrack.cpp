@@ -11,8 +11,8 @@
     3b. In order to manually turn integer bits (1/0) from a std::vector to a std::bitset, be sure to start at bitset.size()-1 and go backwards to 0 to maintain order.
     4. To convert integers into a string of hexadecimal digits, put them into a std::stringstream with std::hex, then pass the stream into a string constructor (and convert the stream into a string).
     5. Though bitsets can take strings, they cannot contain chars that are not '1' or '0'.
-    6. How to bitshift and mask integers.
-    7. How to break a 64-bit uint into 8 8-bit uints.
+    6. To split larger ints into individual bytes, use bitshift operations, and mask with 0xFF to get only the right most bits.
+    7. Use bitshifting to break a uint64_t into 8 bytes.
     8. At the end, gotta turn the little-endian bytes into big-endian bytes to display them in the correct order.
 */
 
@@ -21,8 +21,9 @@
     Nothing, it actually works!!!
 */
 
-// Put in string of chars, and get its form as a vector of bits. 
-// TODO: Try adding the chunks backwards? So the bits are in order
+/// @brief Returns vector of unsigned bytes in the same order as the chars appear.
+/// @param s std::string reference
+/// @return std::vector<uint8_t>
 std::vector<uint8_t> paca::string_to_bitstring(std::string const &s)
 {
     std::vector<uint8_t> result;
@@ -45,7 +46,6 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
     {
         std::string chunk = huge_string.substr(i, 32);
         result.push_back(std::bitset<32>(chunk));
-        std::cout << "chunk " << i/32 << ": " << chunk << std::endl;
     }
 
     return result;
@@ -55,9 +55,6 @@ std::vector<std::bitset<32>> paca::chunk512_to_chunk32(std::bitset<512> huge)
     Rotates a uint32_t n to the left by c bits, and returns the result.
     Taken from https://stackoverflow.com/questions/776508/best-practices-for-circular-shift-rotate-operations-in-c 
     Honestly I did not want to write a function to shift bits so I hope this works.
-
-    DONE: NO FURTHER TESTING NEEDED.
-    WHY: Did not change the hash output (even though the hashes are wrong).
 */ 
 /// \param n the 32-bit integer to rotate
 /// \param c the number of bits to rotate by
@@ -85,7 +82,7 @@ std::vector<uint8_t> paca::uint64_t_to_vector(const uint64_t &huge)
     return result;
 }
 
-// Modified code from ChatGPT. Stores result in little-endian.
+/// @brief Modified code from ChatGPT. Stores result in little-endian.
 /// @param huge an unsigned 64-bit integer
 /// @return std::vector containing 8 unsigned 8-bit ints in little endian
 std::vector<uint8_t> paca::uint64_t_to_vector_chatgpt(uint64_t huge)
@@ -93,15 +90,18 @@ std::vector<uint8_t> paca::uint64_t_to_vector_chatgpt(uint64_t huge)
     std::vector<uint8_t> result(sizeof(uint64_t));
     for (size_t i = 0; i < sizeof(uint64_t); i++)
     {
-        result[i] = (huge>>(i*8)) & 0xFF;
-        // std::cout << "result[" << sizeof(uint64_t)-i-1 << "]: " << result[sizeof(uint64_t)-i-1] << "\n";
+        result[i] = (huge>>(i*8)) & 0xFF;   // Bitshifts and masks to extract bytes, then stores in little-endian order.
     }
 
     return result;
 }
 
 // Code here inspired from: https://forum.arduino.cc/t/convert-4-uint8_t-into-one-uint32_t/577243/2. 
-std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t> &bytesVector)
+// TODO: Require input validation that bytesVector's size is multiple of 64.
+/// @brief Takes a vector of unsigned bytes and arranges them in little-endian order 32-bit words. Stores them in arrays of 16 at a time. Requires input to have a size that is a multiple of 64.
+/// @param bytesVector reference to std::vector<uint8_t> with size congruent to 0 (modulo 64)
+/// @return std::vector containing arrays of 16 32-bit words each stored in little-endian order (assumes input bytes are big-endian order)
+std::vector<std::array<uint32_t, 16>> paca::combine_into_little_endian_32_bit_words(std::vector<uint8_t> &bytesVector)
 {
     std::vector<std::array<uint32_t, 16>> result;
     size_t pointer = 0;
@@ -116,15 +116,10 @@ std::vector<std::array<uint32_t, 16>> paca::separate_into_16(std::vector<uint8_t
             for (int j = 0; j < 4; j++)
             {
                 buffer[j] = bytesVector[pointer+j];
-                // std::cout << std::hex << buffer[j] << " ";   
             }
-            // std::cout << '\n';
-            // Create new 32-bit value from uint8_t[4]. Top two lines are little-endian, last line is big-endian.
-            // uint32_t newvalue = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
+            
             uint32_t newvalue = (uint32_t) buffer[0] | (uint32_t)(buffer[1] << 8) | (uint32_t)(buffer[2] << 16) | (uint32_t)(buffer[3] << 24);
-            // uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
             temp[i] = newvalue;
-            // std::cout << "newvalue " << std::dec << i << ": " << std::hex << newvalue << '\n' << std::dec;
             i++;
             pointer += 4;
         }
@@ -151,25 +146,24 @@ uint32_t paca::uint32_t_little_to_big_endian(uint32_t bytes)
 }
 
 // Takes in an ASCII string and outputs a 128-bit digest in hex as a string.
+/// @brief Returns a string containing the MD5 hash of an input string. Not suitable for cryptography.
+/// @param input std::string of ASCII characters
+/// @returns std::string of hash in hexadecimal format
 std::string paca::myMD5(std::string const &input)
 {
-    // Store string.
+    // Store string as bytes in the same order.
     std::vector<uint8_t> bitstring = paca::string_to_bitstring(input);
 
-    // Pad the string so that it's divisible by 512.
     /*
         Padding is done by adding a single 1 bit at the end of the message, followed
         by as many 0 needed to bring the length of the message up to 64 bits less than
         a multiple of 512. The remaining bits are filled up with 64 bits representing
         the length of the original message, modulo 2^(64).
     */
-
-   // DONE: How to convert bit string to bits.
-   // DONE: Pad the message.
-   // The 64-bit padding length refers to the length of the message in bits (from RFC 1321).
+   
+    // The 64-bit padding length refers to the length of the message in bits (from RFC 1321).
     uint64_t padding = input.size()*8;  // Because unsigned ints handle overflowing numbers as defined by C++ standards, this is automatically modulo 2^64.
     
-    // std::cout << "padding: " << padding << std::endl;
     
     // Add 1 bit, regardless of whether the string is 448-bits exactly or not.
     uint8_t one = 0x80, zero = 0x00;
@@ -181,8 +175,6 @@ std::string paca::myMD5(std::string const &input)
         bitstring.push_back(zero);
     }
 
-    // std::cout << "0x00-padded bitstring size: " << bitstring.size() << ", size%64: " << (bitstring.size())%64 << std::endl;
-
     // Add padding bits to message.
     std::vector<uint8_t> to_pad = paca::uint64_t_to_vector_chatgpt(padding);
     for (uint8_t byte: to_pad)
@@ -190,16 +182,8 @@ std::string paca::myMD5(std::string const &input)
         bitstring.push_back(byte);
     }
 
-    // std::cout << "padded to 512-bit multiple: " << bitstring.size()*8 << ", size%512: " << (bitstring.size()*8)%512 << std::endl;
-
-    // Check each in bitstring.
-    // for (size_t i = 0; i < bitstring.size(); i++)
-    // {
-    //     std::cout << "bitstring[" << i << "]: " << bitstring[i] << '\n';
-    // }
-
     // DONE: Break into arrays containing 16 32-bit words each.
-    std::vector<std::array<uint32_t, 16>> allInputBits = paca::separate_into_16(bitstring);
+    std::vector<std::array<uint32_t, 16>> allInputBits = paca::combine_into_little_endian_32_bit_words(bitstring);
 
     // MAIN ALGORITHM
     // Initial variables; written normally. These DO need to be in little endian.
@@ -208,48 +192,16 @@ std::string paca::myMD5(std::string const &input)
     b0 = 0xefcdab89;
     c0 = 0x98badcfe;
     d0 = 0x10325476;
-    // Big endian
-    // a0 = 0x01234567;
-    // b0 = 0x89abcdef;
-    // c0 = 0xfedcba98;
-    // d0 = 0x76543210;
-    // Specifies per-round shift amounts. Taken from Wikipedia.
-    uint32_t s[64] = 
-    {
-        7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22, 
-        5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20,  5,  9, 14, 20, 
-        4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23, 
-        6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21
-    };
-    // Constants generated using K[i] := floor(2^32*abs(sin(i+1))), where i is [0, 63] inclusive.
-    uint32_t K[64] = 
-    {  
-        0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee, 
-        0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501, 
-        0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be, 
-        0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821, 
-        0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa, 
-        0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8, 
-        0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed, 
-        0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a, 
-        0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c, 
-        0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70, 
-        0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05, 
-        0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665, 
-        0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039, 
-        0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1, 
-        0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1, 
-        0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
-    };
     
     // Operates on 128-bit state, dividing into four 32-bit words, A thru D. 
     /*
-        ^= XOR, assign
-        &= AND, assign
-        |= OR, assign
-        ~var NOT var
-        <<=X Shift left by X bits, assign
-        >>=X Shift right by X bits, assign
+        --Bitwise Operations--
+        A^B is A XOR B
+        A&B is A AND B
+        A|B is A OR B
+        ~A  is NOT A
+        A<<=B is leftshift A by B bits, assign new value to A
+        A>>=B is rightshift A by B bits, assign new value to A
     */
     for (std::array<uint32_t, 16> M: allInputBits)
     {
@@ -280,11 +232,11 @@ std::string paca::myMD5(std::string const &input)
                 g = (7*i)%16;
             }
             // std::cout<< "M[" << g << "]: " << std::hex << M[g] << std::dec << "\n";
-            F = F+A+K[i]+M[g];
+            F = F+A+paca::K[i]+M[g];
             A = D;
             D = C;
             C = B;
-            B = B+paca::rotl32(F, s[i]);
+            B = B+paca::rotl32(F, paca::s[i]);
         }
 
         // Add chunk's hash to overall result.
@@ -294,6 +246,7 @@ std::string paca::myMD5(std::string const &input)
         d0 += D;
     }
 
+    // Convert digest buffers into big-endian, and pass into stringstream as hexadecimal.
     std::stringstream strings;
     uint32_t bigEnd_a0, bigEnd_b0, bigEnd_c0, bigEnd_d0;
     bigEnd_a0 = paca::uint32_t_little_to_big_endian(a0);
