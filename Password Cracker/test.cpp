@@ -1,7 +1,9 @@
 #include "mypasscrack.hpp"
+#include "md5_attacks.hpp"
 #include <iostream>
 #include <sstream>
 #include <limits>
+#include <cassert>
 
 bool isBigEndian()
 {
@@ -49,9 +51,9 @@ void hashWords(std::vector<std::string> &passwords)
 
 int main(int argc, char *argv[])
 {
-    if (argc > 3)
+    if (argc > 4)
     {
-        std::cout << "Sorry, can't use spaces in passwords. Try again." << std::endl;
+        std::cout << "Sorry, you passed in too many arguments. Try again." << std::endl;
         return 1;
     }
 
@@ -78,7 +80,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (argc == 3)
+    if (argc >= 3)
     {
         std::string arg1(argv[1]);
         std::string password(argv[2]);
@@ -87,6 +89,14 @@ int main(int argc, char *argv[])
         {
             std::vector<std::string> tohash = {password};
             hashWords(tohash);
+        }
+        else if (arg1 == "-crack" || arg1 == "-c")
+        {
+            assert(argc == 4);
+            std::string length = argv[3];
+            uint16_t maxlength = std::stoi(length);
+            std::string cracked = md5_attacks::brute_force_cracker(password, maxlength);
+            std::cout << cracked << std::endl;
         }
         else
         {
