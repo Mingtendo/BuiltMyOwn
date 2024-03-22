@@ -21,6 +21,7 @@ std::string md5_attacks::hashDFS(const std::string &hash, const int &maxLength, 
     {
         return pass;
     }
+    // std::cout << pass << " was not the hash" << std::endl;
 
     // Try every letter combination, and recurse.
     for (char letter: md5_attacks::allChars)
@@ -28,9 +29,12 @@ std::string md5_attacks::hashDFS(const std::string &hash, const int &maxLength, 
         // Explore: try new letter with prefix.
         // Recurse: call function again on this new string.
         std::string possible = pass+letter;
-        if (possible != "")
+        // std::cout << "Trying out: " << possible << std::endl;
+        std::string downbelow = md5_attacks::hashDFS(hash, maxLength, possible);
+        if (downbelow != "")
         {
-            return possible;
+            std::cout << downbelow << " was it!" << std::endl;
+            return downbelow;
         }
         // Backtrack implicit since we just create a new prefix with the next letter.
     }

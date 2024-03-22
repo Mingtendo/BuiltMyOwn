@@ -3,6 +3,7 @@
 #include <sstream>
 #include <array>
 #include <cassert>
+#include <iomanip>
 
 /*
     Things Learned So Far:
@@ -255,7 +256,9 @@ std::string paca::myMD5(std::string const &input)
     bigEnd_b0 = paca::uint32_t_little_to_big_endian(b0);
     bigEnd_c0 = paca::uint32_t_little_to_big_endian(c0);
     bigEnd_d0 = paca::uint32_t_little_to_big_endian(d0);
-    strings << std::hex << bigEnd_a0 << bigEnd_b0 << bigEnd_c0 << bigEnd_d0;
+    // TODO: Get leading zeroes to display.
+    // Force output to be 2 chars wide, so that leading zeroes are displayed.
+    strings << std::setfill('0') << std::setw(2) << std::right << std::hex << bigEnd_a0 << bigEnd_b0 << bigEnd_c0 << bigEnd_d0;
     std::string digest(strings.str());
 
     return digest;
