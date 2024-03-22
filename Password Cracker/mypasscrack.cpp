@@ -252,15 +252,19 @@ std::string paca::myMD5(std::string const &input)
     // Convert digest buffers into big-endian, and pass into stringstream as hexadecimal.
     std::stringstream strings;
     uint32_t bigEnd_a0, bigEnd_b0, bigEnd_c0, bigEnd_d0;
-    bigEnd_a0 = paca::uint32_t_little_to_big_endian(a0);
-    bigEnd_b0 = paca::uint32_t_little_to_big_endian(b0);
-    bigEnd_c0 = paca::uint32_t_little_to_big_endian(c0);
-    bigEnd_d0 = paca::uint32_t_little_to_big_endian(d0);
-    // Force output to be 8 chars wide, so that leading zeroes are displayed.
-    strings << std::setfill('0') << std::setw(8) << std::right << std::hex << bigEnd_a0;
-    strings << std::setfill('0') << std::setw(8) << std::right << std::hex << bigEnd_b0;
-    strings << std::setfill('0') << std::setw(8) << std::right << std::hex << bigEnd_c0;
-    strings << std::setfill('0') << std::setw(8) << std::right << std::hex << bigEnd_d0;
+    uint32_t bigEnd_out[4];
+    bigEnd_out[0] = paca::uint32_t_little_to_big_endian(a0);
+    bigEnd_out[1] = paca::uint32_t_little_to_big_endian(b0);
+    bigEnd_out[2] = paca::uint32_t_little_to_big_endian(c0);
+    bigEnd_out[3] = paca::uint32_t_little_to_big_endian(d0);
+    
+
+    for (size_t i = 0; i < sizeof(bigEnd_out)/sizeof(uint32_t); i++)
+    {
+        // Force output to be 8 chars wide, so that leading zeroes are displayed.
+        strings << std::setfill('0') << std::setw(8) << std::right << std::hex << bigEnd_out[i];
+    }
+    
     std::string digest(strings.str());
 
     return digest;
