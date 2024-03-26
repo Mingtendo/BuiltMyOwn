@@ -4,6 +4,8 @@
 #include <sstream>
 #include <limits>
 #include <cassert>
+#include <algorithm>
+#include <exception>
 
 bool isBigEndian()
 {
@@ -49,35 +51,54 @@ void hashWords(std::vector<std::string> &passwords)
     }
 }
 
+bool cmdOptionExists(char *begin[], char *end[], const std::string &option)
+{
+    return std::find(begin, end, option) != end;
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc > 4)
+    // argv is an array of pointers to char, argv+argc is a pointer to the end of the array
+    if (cmdOptionExists(argv, argv+argc, "-h") || cmdOptionExists(argv, argv+argc, "-hash"))
     {
-        std::cout << "Sorry, you passed in too many arguments. Try again." << std::endl;
-        return 1;
-    }
+        std::string arg1(argv[1]);
+        std::string password(argv[2]);
 
-    // I know this design is garbage but it'll work for now.
-    if (argc == 1)
+        std::vector<std::string> tohash = {password};
+        hashWords(tohash);
+    }
+    else if (cmdOptionExists(argv, argv+argc, "-help"))
+    {
+        std::cout << "-help                     display this message \n";
+        std::cout << "-hash [password]          [alias -h] produces MD5 hash of password \n";
+        std::cout << "-brute [hash] [p_len]     [alias -bf] uses brute-force to crack hash using passwords up to p_len chars \n";
+        std::cout << "Using no parameter input displays hashes of test strings." << std::endl;
+    }
+    else if (cmdOptionExists(argv, argv+argc, "-brute") || cmdOptionExists(argv, argv+argc, "-bf"))
+    {   
+        try
+        {
+            std::string password(argv[2]);
+            std::string length = argv[3];
+            uint16_t maxlength = std::stoi(length);
+            std::string cracked = md5_attacks::brute_force_cracker(password, maxlength);
+            std::cout << cracked << std::endl;
+        }
+        catch (std::exception &e)
+        {
+            std::cerr << "Exception caught: " << e.what() << std::endl;
+        }
+        
+    }
+    else if (cmdOptionExists(argv, argv+argc, "-test"))
     {
         std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", "", "abc"};
         hashWords(passwords);
     }
-
-    if (argc == 2)
+    else
     {
-        std::string arg1(argv[1]);
-        if (arg1 == "-help")
-        {
-            std::cout << "-help                     display this message \n";
-            std::cout << "-hash [password]          [alias -h] produces MD5 hash of password \n";
-            std::cout << "Using no parameter input displays hashes of test strings." << std::endl;
-        }
-        else
-        {
-            std::cout << "Flag not found. Please use -help for more info." << std::endl;
-            return 1;
-        }
+        std::cout << "Flag not found. Please use -help for more info." << std::endl;
+        return 1;
     }
 
     if (argc >= 3)
@@ -85,12 +106,7 @@ int main(int argc, char *argv[])
         std::string arg1(argv[1]);
         std::string password(argv[2]);
 
-        if (arg1 == "-hash" || arg1 == "-h")
-        {
-            std::vector<std::string> tohash = {password};
-            hashWords(tohash);
-        }
-        else if (arg1 == "-crack" || arg1 == "-c")
+        if (arg1 == "-crack" || arg1 == "-c")
         {
             assert(argc == 4);
             std::string length = argv[3];
