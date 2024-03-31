@@ -1,6 +1,29 @@
 #include "mypasscrack.hpp"
 #include "md5_attacks.hpp"
 #include <iostream>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+/*
+    Generate & Store Values
+    We read in a plain textfile (*.txt) and then generate the hashes. We store the results as a JSON file.
+
+*/
+void md5_attacks::generateHashes(const std::string &fileInput, const std::string &fileOutput)
+{
+    std::cout << "input file: " << fileInput << "\n";
+    std::cout << "output file: " << fileOutput << "\n";
+}
+
+/*
+    Idea: Use Hashmap
+    Assume we already have a hashmap mapping hashes to plaintext passwords. Then, we want to parse the
+    file until we get a hash that matches, and return the password that it's attached to. If no match
+    is found, return the string "None". We can take a filepath in, assuming it hashes mapped to passwords.
+    If not, we try looking for "md5hashdict.json".
+*/
+
+
 
 /*
     Idea: Backtracking

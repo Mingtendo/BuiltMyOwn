@@ -6,6 +6,9 @@
 #include <cassert>
 #include <algorithm>
 #include <exception>
+#include <fstream>
+#include <sys/stat.h>
+#include <unistd.h>
 
 bool isBigEndian()
 {
@@ -56,6 +59,12 @@ bool cmdOptionExists(char *begin[], char *end[], const std::string &option)
     return std::find(begin, end, option) != end;
 }
 
+inline bool fileExists(const std::string &filename)
+{
+    struct stat buffer;
+    return (stat (filename.c_str(), &buffer) == 0);
+}
+
 int main(int argc, char *argv[])
 {
     // argv is an array of pointers to char, argv+argc is a pointer to the end of the array
@@ -69,7 +78,7 @@ int main(int argc, char *argv[])
             std::vector<std::string> tohash = {password};
             hashWords(tohash);
         }
-        catch (std::exception &e)
+        catch (const std::exception &e)
         {
             std::cerr << "Exception caught: " << e.what() << std::endl;
         }
@@ -91,7 +100,7 @@ int main(int argc, char *argv[])
             std::string cracked = md5_attacks::brute_force_cracker(password, maxlength);
             std::cout << cracked << std::endl;
         }
-        catch (std::exception &e)
+        catch (const std::exception &e)
         {
             std::cerr << "Exception caught: " << e.what() << std::endl;
         }
@@ -101,6 +110,40 @@ int main(int argc, char *argv[])
     {
         std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", "", "abc"};
         hashWords(passwords);
+    }
+    // Generate hashes. Check first that inputs are valid and output file doesn't exist.
+    else if (cmdOptionExists(argv, argv+argc, "-gen") || cmdOptionExists(argv, argv+argc, "-g"))
+    {
+        std::string inputFilePath, outputFilePath;
+        try
+        {
+            inputFilePath = argv[2];
+            outputFilePath = (argc == 4) ? argv[3] : "md5hashdict.txt";
+            
+            if (!fileExists(inputFilePath))
+            {
+                throw std::invalid_argument("file doesn't exist");
+            }
+            if (fileExists(outputFilePath))
+            {
+                throw std::invalid_argument("file already exists");
+            }
+
+            md5_attacks::generateHashes(inputFilePath, outputFilePath);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Exception caught: " << e.what() << std::endl;
+            return 1;
+        }
+
+        md5_attacks::generateHashes(inputFilePath, outputFilePath);
+        
+    }
+    else if (cmdOptionExists(argv, argv+argc, "-da"))
+    {
+        std::string input = "2bdb742fc3d075ec6b73ea414f27819a";
+        
     }
     else
     {

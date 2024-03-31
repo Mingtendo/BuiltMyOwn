@@ -8,6 +8,7 @@ namespace md5_attacks
 {
     std::string hashDFS(const std::string &hash, const int &maxLength, std::string &pass);
     std::string brute_force_cracker(const std::string &hash, uint16_t &maxLength);
+    void generateHashes(const std::string &fileInput, const std::string &fileOutput);
 
     const std::string allChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&";
 }
