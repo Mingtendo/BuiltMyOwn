@@ -61,11 +61,18 @@ int main(int argc, char *argv[])
     // argv is an array of pointers to char, argv+argc is a pointer to the end of the array
     if (cmdOptionExists(argv, argv+argc, "-h") || cmdOptionExists(argv, argv+argc, "-hash"))
     {
-        std::string arg1(argv[1]);
-        std::string password(argv[2]);
+        try
+        {
+            std::string arg1(argv[1]);
+            std::string password(argv[2]);
 
-        std::vector<std::string> tohash = {password};
-        hashWords(tohash);
+            std::vector<std::string> tohash = {password};
+            hashWords(tohash);
+        }
+        catch (std::exception &e)
+        {
+            std::cerr << "Exception caught: " << e.what() << std::endl;
+        }
     }
     else if (cmdOptionExists(argv, argv+argc, "-help"))
     {
@@ -98,27 +105,6 @@ int main(int argc, char *argv[])
     else
     {
         std::cout << "Flag not found. Please use -help for more info." << std::endl;
-        return 1;
-    }
-
-    if (argc >= 3)
-    {
-        std::string arg1(argv[1]);
-        std::string password(argv[2]);
-
-        if (arg1 == "-crack" || arg1 == "-c")
-        {
-            assert(argc == 4);
-            std::string length = argv[3];
-            uint16_t maxlength = std::stoi(length);
-            std::string cracked = md5_attacks::brute_force_cracker(password, maxlength);
-            std::cout << cracked << std::endl;
-        }
-        else
-        {
-            std::cout << "Flag not found. Please use -help for more info." << std::endl;
-            return 1;
-        }
     }
 
     
