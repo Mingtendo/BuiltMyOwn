@@ -13,6 +13,24 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
 {
     std::cout << "input file: " << fileInput << "\n";
     std::cout << "output file: " << fileOutput << "\n";
+
+    std::ifstream f(fileInput);
+    if (!f.is_open())
+    {
+        perror(("Error while opening file " + fileInput).c_str());
+    }
+    std::string line;
+    while (std::getline(f, line))
+    {
+        std::cout << line << std::endl;
+    }
+
+    // Error handling if there was a problem.
+    if (f.bad())
+    {
+        perror(("Error while reading file " + fileInput).c_str());
+    }
+    f.close();
 }
 
 /*

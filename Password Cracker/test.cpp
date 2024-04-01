@@ -6,7 +6,6 @@
 #include <cassert>
 #include <algorithm>
 #include <exception>
-#include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -20,31 +19,18 @@ bool isBigEndian()
 
 /*
 MD5 test suite:
-
 MD5 ("") = d41d8cd98f00b204e9800998ecf8427e
-using ints: 227b7f48d21283f63bc9bbc15b44ea1a
-fixed padding endianness, fixed construction of 16x32-bit chunks: 2520df5474d1b17877bf08654076c48
-
 MD5 ("a") = cc175b9c0f1b6a831c399e269772661
 MD5 ("abc") = 900150983cd24fb0d6963f7d28e17f72
-
 MD5 ("password") = 5f4dcc3b5aa765d61d8327deb882cf99
-using ints: 5caf9f3fb5f5a16e36bc1224a47a1587
-fixed padding endianness, fixed construction of 16x32-bit chunks: db90b03bf0837cc7b550575a6a6d4ad8
-
 MD5 ("message digest") = f96b697d7cb7938d525a2f31aaf161d0
 MD5 ("abcdefghijklmnopqrstuvwxyz") = c3fcd3d76192e4007dfb496cca67e13b
-
 MD5 ("The quick brown fox jumps over the lazy dog") = 9e107d9d372bb6826bd81d3542a419d6
-using ints: da0992e2976c86cdd0bfe0a79d5a5555
-fixed padding endianness, fixed construction of 16x32-bit chunks: 4b0334e4c0f11a0fa4bdc119a8b7e41d
-
 MD5 ("The quick brown fox jumps over the lazy dog.") = e4d909c290d0fb1ca068ffaddf22cbd0
-
 MD5 ("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") = d174ab98d277d9f5a5611c2c9f419d9f
 MD5 ("12345678901234567890123456789012345678901234567890123456789012345678901234567890") = 57edf4a22be3c955ac49da2e2107b67a
 */
-void hashWords(std::vector<std::string> &passwords)
+inline void hashWords(std::vector<std::string> &passwords)
 {
     for (std::string pass: passwords)
     {
@@ -54,15 +40,18 @@ void hashWords(std::vector<std::string> &passwords)
     }
 }
 
-bool cmdOptionExists(char *begin[], char *end[], const std::string &option)
+inline bool cmdOptionExists(char *begin[], char *end[], const std::string &option)
 {
     return std::find(begin, end, option) != end;
 }
 
+// Uses the stat struct, and then calls the stat function (what great naming) to check if the
+// struct contains data or a 0. If it does, that means such a file doesn't exist.
+// Read more here: https://pubs.opengroup.org/onlinepubs/7908799/xsh/sysstat.h.html 
 inline bool fileExists(const std::string &filename)
 {
     struct stat buffer;
-    return (stat (filename.c_str(), &buffer) == 0);
+    return (stat(filename.c_str(), &buffer) == 0);
 }
 
 int main(int argc, char *argv[])
