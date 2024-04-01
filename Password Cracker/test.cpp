@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
         std::cout << "-help                     display this message \n";
         std::cout << "-hash [password]          [alias -h] produces MD5 hash of password \n";
         std::cout << "-brute [hash] [p_len]     [alias -bf] uses brute-force to crack hash using passwords up to p_len chars \n";
+        std::cout << "-gen [abs_file_path] <output_file_name>  [alias -g] generates hashes from file \n";
         std::cout << "Using no parameter input displays hashes of test strings." << std::endl;
     }
     else if (cmdOptionExists(argv, argv+argc, "-brute") || cmdOptionExists(argv, argv+argc, "-bf"))
@@ -114,6 +115,12 @@ int main(int argc, char *argv[])
     // Generate hashes. Check first that inputs are valid and output file doesn't exist.
     else if (cmdOptionExists(argv, argv+argc, "-gen") || cmdOptionExists(argv, argv+argc, "-g"))
     {
+        if (argc < 3)
+        {
+            std::cout << "Not enough arguments." << std::endl;
+            return -1;
+        }
+
         std::string inputFilePath, outputFilePath;
         try
         {
@@ -122,14 +129,14 @@ int main(int argc, char *argv[])
             
             if (!fileExists(inputFilePath))
             {
-                throw std::invalid_argument("file doesn't exist");
+                throw std::invalid_argument("file doesn't exist; give absolute path");
             }
             if (fileExists(outputFilePath))
             {
                 throw std::invalid_argument("file already exists");
             }
 
-            md5_attacks::generateHashes(inputFilePath, outputFilePath);
+            // md5_attacks::generateHashes(inputFilePath, outputFilePath);
         }
         catch (const std::exception &e)
         {
