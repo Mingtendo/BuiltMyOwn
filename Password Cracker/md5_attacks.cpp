@@ -8,6 +8,10 @@
     Generate & Store Values
     We read in a plain textfile (*.txt) and then generate the hashes. We store the results as a JSON file.
 
+    TODO: 
+    1. Test code as is.
+    2. Figure out how to create and write to a JSON file.
+    3. Test that.
 */
 void md5_attacks::generateHashes(const std::string &fileInput, const std::string &fileOutput)
 {
