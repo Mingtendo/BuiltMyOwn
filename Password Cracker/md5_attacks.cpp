@@ -12,29 +12,33 @@
     1. Test code as is.
     2. Figure out how to create and write to a JSON file.
     3. Test that.
+
+    Best practices for file reading and error output here: 
+    https://gehrcke.de/2011/06/reading-files-in-c-using-ifstream-dealing-correctly-with-badbit-failbit-eofbit-and-perror/
+
 */
 void md5_attacks::generateHashes(const std::string &fileInput, const std::string &fileOutput)
 {
     std::cout << "input file: " << fileInput << "\n";
     std::cout << "output file: " << fileOutput << "\n";
 
-    std::ifstream f(fileInput);
-    if (!f.is_open())
+    std::ifstream FI(fileInput);
+    if (!FI.is_open())
     {
         perror(("Error while opening file " + fileInput).c_str());
     }
     std::string line;
-    while (std::getline(f, line))
+    while (std::getline(FI, line))
     {
         std::cout << line << std::endl;
     }
 
     // Error handling if there was a problem.
-    if (f.bad())
+    if (FI.bad())
     {
         perror(("Error while reading file " + fileInput).c_str());
     }
-    f.close();
+    FI.close();
 }
 
 /*
