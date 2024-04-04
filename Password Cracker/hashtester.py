@@ -7,7 +7,8 @@ def testhash(word: str):
     encoded = word.encode(encoding='ascii')
     return md5(encoded).hexdigest()
 
-passwords = ["password", "The quick brown fox jumps over the lazy dog", "", "$aintshit$", "$ailormoon", "$ailorMoon"]
+passwords = ["password", "The quick brown fox jumps over the lazy dog", "", "$aintshit$", "$ailormoon", "$ailorMoon",
+             "d'ollieres", "BSAMOAN2"]
 
 for pw in passwords:
     print(f"{pw}: {testhash(pw)}")

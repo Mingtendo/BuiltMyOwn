@@ -9,9 +9,8 @@
     We read in a plain textfile (*.txt) and then generate the hashes. We store the results as a JSON file.
 
     TODO: 
-    1. Test code as is.
-    2. Figure out how to create and write to a JSON file.
-    3. Test that.
+    1. Figure out how to write individual lines to a file, because I literally ran out of buffer space.
+    Code technically works though.""
 
     Best practices for file reading and error output here: 
     https://gehrcke.de/2011/06/reading-files-in-c-using-ifstream-dealing-correctly-with-badbit-failbit-eofbit-and-perror/
@@ -25,22 +24,37 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
     std::ifstream FI(fileInput);
     if (!FI.is_open())
     {
-        perror(("Error while opening file " + fileInput).c_str());
+        perror(("Error while opening input file " + fileInput).c_str());
     }
     std::string line;
     nlohmann::json J; 
     while (std::getline(FI, line))
     {
-        std::cout << line << std::endl;
+        // std::cout << line << std::endl;
         std::string hash = paca::myMD5(line);
+        J[hash] = line;
     }
 
     // Error handling if there was a problem.
     if (FI.bad())
     {
-        perror(("Error while reading file " + fileInput).c_str());
+        perror(("Error while reading input file " + fileInput).c_str());
     }
     FI.close();
+
+    std::ofstream FO(fileOutput);
+    if (!FO.is_open())
+    {
+        perror(("Error while opening output file " + fileOutput).c_str());
+    }
+    // Pretty write JSON file.
+    FO << std::setw(4) << J << std::endl;
+    if (FI.bad())
+    {
+        perror(("Error while writing output file " + fileOutput).c_str());
+    }
+
+    FO.close();
 }
 
 /*

@@ -35,8 +35,8 @@ inline void hashWords(std::vector<std::string> &passwords)
     for (std::string pass: passwords)
     {
         std::string out = paca::myMD5(pass);
-        std::cout << "Result of hashing \'" << pass << "\':" << std::endl;
-        std::cout << out << "\n------------------------------------------------------------------------"<< std::endl;
+        std::cout << "Result of hashing \'" << pass << "\':\n";
+        std::cout << out << "\n------------------------------------------------------------------------\n";
     }
 }
 
@@ -54,6 +54,10 @@ inline bool fileExists(const std::string &filename)
     return (stat(filename.c_str(), &buffer) == 0);
 }
 
+/*
+    TODO:
+    Turn this into a bunch of switches? This code is pretty ugly, though it works.
+*/
 int main(int argc, char *argv[])
 {
     // argv is an array of pointers to char, argv+argc is a pointer to the end of the array
@@ -114,7 +118,7 @@ int main(int argc, char *argv[])
         try
         {
             inputFilePath = argv[2];
-            outputFilePath = (argc == 4) ? argv[3] : "md5hashdict.txt";
+            outputFilePath = (argc == 4) ? argv[3] : "md5hashdict.json";
             
             if (!fileExists(inputFilePath))
             {
