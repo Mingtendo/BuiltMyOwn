@@ -28,9 +28,11 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
         perror(("Error while opening file " + fileInput).c_str());
     }
     std::string line;
+    nlohmann::json J; 
     while (std::getline(FI, line))
     {
         std::cout << line << std::endl;
+        std::string hash = paca::myMD5(line);
     }
 
     // Error handling if there was a problem.
