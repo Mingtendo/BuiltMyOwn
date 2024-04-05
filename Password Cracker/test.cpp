@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     }
     else if (cmdOptionExists(argv, argv+argc, "-test"))
     {
-        std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", "", "abc"};
+        std::vector<std::string> passwords = {"password", "The quick brown fox jumps over the lazy dog", "", "abc", "!\"�%^&*()"};
         hashWords(passwords);
     }
     // Generate hashes. Check first that inputs are valid and output file doesn't exist.

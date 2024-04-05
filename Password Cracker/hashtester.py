@@ -4,11 +4,12 @@ from bitarray import bitarray
 import struct
 
 def testhash(word: str):
-    encoded = word.encode(encoding='ascii')
+    encoded = word.encode(encoding='utf-8')
     return md5(encoded).hexdigest()
 
-passwords = ["password", "The quick brown fox jumps over the lazy dog", "", "$aintshit$", "$ailormoon", "$ailorMoon",
-             "d'ollieres", "BSAMOAN2"]
+passwords = ["password", "The quick brown fox jumps over the lazy dog", "", 
+             "$aintshit$", "$ailormoon", "$ailorMoon",
+             "d'ollieres", "BSAMOAN2", "!\"�%^&*()"]
 
 for pw in passwords:
     print(f"{pw}: {testhash(pw)}")

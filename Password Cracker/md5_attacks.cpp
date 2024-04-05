@@ -3,14 +3,53 @@
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <codecvt>
 
+/*
+    TODO:
+    Get it so that it's a JSON Object containing other JSON objects.
+*/
+// Code from ChatGPT. Appends to the EOF.
+inline bool writeToJSON(const std::string &fileOutput, nlohmann::json &jsonObject)
+{
+    // Open file in append mode.
+    std::ofstream FO(fileOutput, std::ios::app);
+    if (!FO.is_open())
+    {
+        perror(("Error while opening output file: " + fileOutput).c_str());
+        return false;
+    }
+
+    // Move file pointer to the end of the file.
+    FO.seekp(0, std::ios::end);
+
+    // Pretty write the JSON object.
+    FO << std::setw(4) << jsonObject << "," << std::endl;
+    if (FO.bad())
+    {
+        perror(("Error while writing output file " + fileOutput).c_str());
+        return false;
+    }
+    FO.close();
+    return true;
+}
 /*
     Generate & Store Values
     We read in a plain textfile (*.txt) and then generate the hashes. We store the results as a JSON file.
 
+    What Works:
+    MD5 Hashing algorithm works with UTF-8 characters. After all, MD5 only cares about the bytes that are
+    fed in, not how they are interpreted. So while it can generate the hashes correctly, there are issues
+    writing to the file.
+
+    Things learned thus far:
+    1. Convert regular strings to UTF-8 using std::wstring_convert<std::codecvt_utf8<wchar_t>>.
+    2. Can NOT write nested JSON objects.
+    3. Can NOT write JSON objects line by line.
+    4. Write to the end of a JSON file, to finagle writing to end of JSON in chunks.
+
     TODO: 
-    1. Figure out how to write individual lines to a file, because I literally ran out of buffer space.
-    Code technically works though.""
+    2. Figure out how to write UTF-8 characters to a file.
 
     Best practices for file reading and error output here: 
     https://gehrcke.de/2011/06/reading-files-in-c-using-ifstream-dealing-correctly-with-badbit-failbit-eofbit-and-perror/
@@ -21,38 +60,78 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
     std::cout << "input file: " << fileInput << "\n";
     std::cout << "output file: " << fileOutput << "\n";
 
-    std::ifstream FI(fileInput);
-    if (!FI.is_open())
-    {
-        perror(("Error while opening input file " + fileInput).c_str());
-    }
-    std::string line;
-    nlohmann::json J; 
-    while (std::getline(FI, line))
-    {
-        // std::cout << line << std::endl;
-        std::string hash = paca::myMD5(line);
-        J[hash] = line;
-    }
-
-    // Error handling if there was a problem.
-    if (FI.bad())
-    {
-        perror(("Error while reading input file " + fileInput).c_str());
-    }
-    FI.close();
-
     std::ofstream FO(fileOutput);
     if (!FO.is_open())
     {
         perror(("Error while opening output file " + fileOutput).c_str());
+        return;
     }
-    // Pretty write JSON file.
-    FO << std::setw(4) << J << std::endl;
-    if (FI.bad())
+    // Open JSON object.
+    FO << "{\n";
+
+    if (FO.bad())
     {
         perror(("Error while writing output file " + fileOutput).c_str());
+        return;
+    } 
+
+    FO.close();
+
+    std::ifstream FI(fileInput);
+    if (!FI.is_open())
+    {
+        perror(("Error while opening input file " + fileInput).c_str());
+        return;
     }
+
+    std::string line;
+    nlohmann::json J; 
+
+    while (std::getline(FI, line))
+    {
+        // std::cout << line << std::endl;
+        if (FI.bad())
+        {
+            perror(("Error while reading input file " + fileInput).c_str());
+            break;
+        }
+
+        std::string hash = paca::myMD5(line);
+        std::cout << "current line: " << line << std::endl;
+        // Convert string to wstring
+        std::wstring wideString = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(line);
+
+        J[hash] = line;
+        if (J.size() == 1000)
+        {
+            std::cout << "last to write was: " << line << "\n";
+            bool res = writeToJSON(fileOutput, J);
+            J = {};
+            if (!res)
+            {
+                break;
+            }
+        }
+        
+    }
+    FI.close();
+
+    // Reopen file in append mode.
+    FO.open(fileOutput, std::ios::app);
+    if (!FO.is_open())
+    {
+        perror(("Error while opening output file " + fileOutput).c_str());
+        return;
+    }
+
+    // Close JSON object.
+    FO << "}\n";
+
+    if (FO.bad())
+    {
+        perror(("Error while writing output file " + fileOutput).c_str());
+        return;
+    } 
 
     FO.close();
 }
