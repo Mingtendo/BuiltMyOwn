@@ -149,54 +149,6 @@ int main(int argc, char *argv[])
     {
         std::cout << "Flag not found. Please use -help for more info." << std::endl;
     }
-
-    
-    // This is all stuff I learned or used to learn. Keeping for posterity.
-    // Can't copy a string into a bitset. Must be converted to char first, and then bits.
-    /* 
-    std::string test = "password";
-    std::string bits;
-    for (char c: test)
-    {
-        int letter = c;
-        std::cout << "letter " << c << ": " << letter << std::endl;
-        std::bitset<8> temp(letter);    // Convert to bits.
-        for (int i = 0; i < 8; i++)
-        {
-            std::cout << "bit " << i << ": " << temp[i] << std::endl;
-        }
-        bits += temp.to_string();
-        std::cout << "bits: " << bits << std::endl;
-    }
-    */
-    // unsigned long long int x = std::numeric_limits<unsigned long long int>::max();
-    // std::cout << x << std::endl;
-
-    // std::cout << "char 0x00: " << (unsigned char) 0x00 << '\n'; // Shows nothing.
-    // std::cout << "int 0x00: " << (int) 0x00 << '\n';
-
-    // std::cout << "\'test\' as bit string: " << std::bitset<32>("test") << '\n'; // Illegal
-
-    // These 2 are the same.
-    // std::cout << "unsigned char 'c' to bitset: " << std::bitset<8>((unsigned char) 'c').to_string() << '\n';
-    // std::cout << "unsigned char 0b01100011: " << (unsigned char) 0b01100011 << '\n';
-
-    // std::cout << (isBigEndian() ? "Big Endian" : "Little Endian") << std::endl;
-    // uint32_t a = 0x0a1a56, b = 0x561a0a;  // 0x0a1a56 is 662102. This is the correct way to store hex nums.
-    // std::cout << "a: " << a << "\n" << "b: " << b << "\n";
-
-    // uint32_t testA = 0xd98c1dd4;
-    // uint32_t testA_result = paca::uint32_t_little_to_big_endian(testA);
-
-    // std::stringstream ss;
-    // ss << std::hex << testA_result;
-    // std::string converted(ss.str());
-    // std::cout << converted << std::endl;
-
-    // Create new 32-bit value from uint8_t[4]. Top two lines are little-endian, last line is big-endian.
-    // uint32_t newvalue = (buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0];
-    // uint32_t newvalue = (uint32_t) buffer[0] | (uint32_t)(buffer[1] << 8) | (uint32_t)(buffer[2] << 16) | (uint32_t)(buffer[3] << 24);
-    // uint32_t newvalue = (buffer[0] << 24) | (buffer[1] << 16) | (buffer[2] << 8) | buffer[3];
     
     return 0;
 }

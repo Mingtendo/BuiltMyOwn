@@ -5,6 +5,58 @@
 #include <nlohmann/json.hpp>
 #include <codecvt>
 
+
+// From ChatGPT
+/// @brief Checks if a given string is valid UTF-8
+/// @param input const std::string
+/// @return true if string is UTF-8; false otherwise
+inline bool isValidUTF8(const std::string& input) 
+{
+    for (size_t i = 0; i < input.size(); i++) 
+    {
+        unsigned char byte = static_cast<unsigned char>(input[i]);
+
+        // Check if it's a single-byte character (0xxxxxxx)
+        if (byte <= 0x7F) 
+        {
+            continue;
+        }
+
+        // Check if it's the start of a multi-byte character
+        if (byte >= 0xC2 && byte <= 0xDF) 
+        {
+            if (i + 1 >= input.size() || (input[i + 1] & 0xC0) != 0x80) 
+            {
+                return false;
+            }
+            i++;
+        } 
+        else if (byte >= 0xE0 && byte <= 0xEF) 
+        {
+            if (i + 2 >= input.size() || (input[i + 1] & 0xC0) != 0x80 || (input[i + 2] & 0xC0) != 0x80)
+            {
+                return false;
+            }
+            i += 2;
+        } 
+        else if (byte >= 0xF0 && byte <= 0xF4) 
+        {
+            if (i + 3 >= input.size() || (input[i + 1] & 0xC0) != 0x80 || (input[i + 2] & 0xC0) != 0x80 || (input[i + 3] & 0xC0) != 0x80) 
+            {
+                return false;
+            }
+            i += 3;
+        } 
+        else 
+        {
+            // Invalid leading byte
+            return false;
+        }
+    }
+
+    return true;
+}
+
 /*
     TODO:
     Get it so that it's a JSON Object containing other JSON objects.
@@ -12,6 +64,8 @@
 // Code from ChatGPT. Appends to the EOF.
 inline bool writeToJSON(const std::string &fileOutput, nlohmann::json &jsonObject)
 {
+    // Used for testing to avoid generating 1 GB+ files.
+    return true;
     // Open file in append mode.
     std::ofstream FO(fileOutput, std::ios::app);
     if (!FO.is_open())
@@ -47,6 +101,7 @@ inline bool writeToJSON(const std::string &fileOutput, nlohmann::json &jsonObjec
     2. Can NOT write nested JSON objects.
     3. Can NOT write JSON objects line by line.
     4. Write to the end of a JSON file, to finagle writing to end of JSON in chunks.
+    5. std::wstring_convert is deprecated in C++17, and pending removal in C++26.
 
     TODO: 
     2. Figure out how to write UTF-8 characters to a file.
@@ -77,6 +132,7 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
 
     FO.close();
 
+    // Start reading from input file.
     std::ifstream FI(fileInput);
     if (!FI.is_open())
     {
@@ -97,14 +153,24 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
         }
 
         std::string hash = paca::myMD5(line);
-        std::cout << "current line: " << line << std::endl;
+        // std::cout << "current line: " << line << std::endl;
         // Convert string to wstring
-        std::wstring wideString = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(line);
+        // std::wstring wideString = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().from_bytes(line);
 
         J[hash] = line;
+        std::string temp = J[hash];
+
+        if (!isValidUTF8(temp))
+        {
+            std::cout << line << " is valid UTF-8? " << (isValidUTF8(line) ? "Yes" : "No") << std::endl;
+            std::cout << temp << " is valid UTF-8? false" << std::endl;
+            J.erase(hash);
+            continue;
+        }
+
         if (J.size() == 1000)
         {
-            std::cout << "last to write was: " << line << "\n";
+            // std::cout << "last to write was: " << line << "\n";
             bool res = writeToJSON(fileOutput, J);
             J = {};
             if (!res)
