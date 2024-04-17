@@ -78,10 +78,10 @@ int main(int argc, char *argv[])
     }
     else if (cmdOptionExists(argv, argv+argc, "-help"))
     {
-        std::cout << "-help                     display this message \n";
-        std::cout << "-hash [password]          [alias -h] produces MD5 hash of password \n";
-        std::cout << "-brute [hash] [p_len]     [alias -bf] uses brute-force to crack hash using passwords up to p_len chars \n";
-        std::cout << "-gen [abs_file_path] <output_file_name>  [alias -g] generates hashes from file \n";
+        std::cout << "-help                                     display this message \n";
+        std::cout << "-hash [password]                          [alias -h] produces MD5 hash of password \n";
+        std::cout << "-brute [hash] [p_len]                     [alias -bf] uses brute-force to crack hash using passwords up to p_len chars \n";
+        std::cout << "-gen [abs_file_path] <output_file_name>   [alias -g] generates hashes from file \n";
         std::cout << "Using no parameter input displays hashes of test strings." << std::endl;
     }
     else if (cmdOptionExists(argv, argv+argc, "-brute") || cmdOptionExists(argv, argv+argc, "-bf"))

@@ -2,14 +2,13 @@
 #include "md5_attacks.hpp"
 #include <iostream>
 #include <fstream>
-#include <nlohmann/json.hpp>
-#include <codecvt>
-
+#include <windows.h>
+#include <memoryapi.h>
 /*
     Generating Dictionary TODO:
-    1. Memory map passwords file and tokenize using LF ('\n') as the delimeter.
-    2. For each password, record its offset from the beginning of the file and its MD5 hash in the index file (write records sequentially to a buffered output stream to a file).
-    3. Memory map the index file and sort it in-place.
+    [W] 1. Memory map passwords file and tokenize using LF ('\n') as the delimeter.
+    [X] 2. For each password, record its offset from the beginning of the file and its MD5 hash in the index file (write records sequentially to a buffered output stream to a file).
+    [X] 3. Memory map the index file and sort it in-place.
 
     Lookup TODO:
     1. Memory map the password and index files.
@@ -70,35 +69,21 @@ inline bool isValidUTF8(const std::string& input)
     return true;
 }
 
-/*
-    DEPRECATED
-    Get it so that it's a JSON Object containing other JSON objects.
-*/
-// Code from ChatGPT. Appends to the EOF.
-inline bool writeToJSON(const std::string &fileOutput, nlohmann::json &jsonObject)
+// Code from ChatGPT.
+// Note that LPCWSTR is the same as wchar_t.
+inline LPCWSTR stringToLPCWSTR(const std::string &s)
 {
-    // Used for testing to avoid generating 1 GB+ files.
-    return true;
-    // Open file in append mode.
-    std::ofstream FO(fileOutput, std::ios::app);
-    if (!FO.is_open())
-    {
-        perror(("Error while opening output file: " + fileOutput).c_str());
-        return false;
-    }
+    // Get size of buffer needed.
+    int size = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
+    if (size == 0) return nullptr;  // Failed to convert.
 
-    // Move file pointer to the end of the file.
-    FO.seekp(0, std::ios::end);
+    // Allocate buffer.
+    wchar_t *buffer = new wchar_t[size];
 
-    // Pretty write the JSON object.
-    FO << std::setw(4) << jsonObject << "," << std::endl;
-    if (FO.bad())
-    {
-        perror(("Error while writing output file " + fileOutput).c_str());
-        return false;
-    }
-    FO.close();
-    return true;
+    // Convert string to wide string.
+    MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, buffer, size);
+
+    return buffer;
 }
 
 /*
@@ -133,29 +118,16 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
     std::cout << "input file: " << fileInput << "\n";
     std::cout << "output file: " << fileOutput << "\n";
 
-    // Start reading from input file.
-    std::ifstream FI(fileInput);
-    if (!FI.is_open())
-    {
-        perror(("Error while opening input file " + fileInput).c_str());
-        return;
-    }
+    // Open file to memory map.
+    LPCWSTR wideAddress = stringToLPCWSTR(fileInput);
+    std::wcout << "input file, wide: " << wideAddress << L"\n";
+    HANDLE hFile = CreateFile(wideAddress, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-    std::string line;
+    // Get file size.
+    LARGE_INTEGER fileSize;
+    GetFileSizeEx(hFile, &fileSize);
 
-    while (std::getline(FI, line))
-    {
-        // std::cout << line << std::endl;
-        if (FI.bad())
-        {
-            perror(("Error while reading input file " + fileInput).c_str());
-            break;
-        }
-
-        std::string hash = paca::myMD5(line);
-        
-    }
-    FI.close();
+    // Create a file mapping object
 }
 
 /*
