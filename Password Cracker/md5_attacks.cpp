@@ -5,6 +5,19 @@
 #include <nlohmann/json.hpp>
 #include <codecvt>
 
+/*
+    Generating Dictionary TODO:
+    1. Memory map passwords file and tokenize using LF ('\n') as the delimeter.
+    2. For each password, record its offset from the beginning of the file and its MD5 hash in the index file (write records sequentially to a buffered output stream to a file).
+    3. Memory map the index file and sort it in-place.
+
+    Lookup TODO:
+    1. Memory map the password and index files.
+    2. Do a binary search in the index file for the hash.
+    3. Use the found offset to get the password from the password memory map (from the offset to the next LF char).
+
+    Use POSIX's mmap library to handle this. Can read more about it here: https://pubs.opengroup.org/onlinepubs/009604499/functions/mmap.html.
+*/
 
 // From ChatGPT
 /// @brief Checks if a given string is valid UTF-8
@@ -58,7 +71,7 @@ inline bool isValidUTF8(const std::string& input)
 }
 
 /*
-    TODO:
+    DEPRECATED
     Get it so that it's a JSON Object containing other JSON objects.
 */
 // Code from ChatGPT. Appends to the EOF.
@@ -87,6 +100,7 @@ inline bool writeToJSON(const std::string &fileOutput, nlohmann::json &jsonObjec
     FO.close();
     return true;
 }
+
 /*
     Generate & Store Values
     We read in a plain textfile (*.txt) and then generate the hashes. We store the results as a JSON file.
@@ -110,27 +124,14 @@ inline bool writeToJSON(const std::string &fileOutput, nlohmann::json &jsonObjec
     https://gehrcke.de/2011/06/reading-files-in-c-using-ifstream-dealing-correctly-with-badbit-failbit-eofbit-and-perror/
 
 */
+
+/// @brief Generate all MD5 hashes for passwords from a file.
+/// @param fileInput Absolute path for the input file containing LF-delimited passwords
+/// @param fileOutput Absolute path for the output file containing LF-delimited passwords
 void md5_attacks::generateHashes(const std::string &fileInput, const std::string &fileOutput)
 {
     std::cout << "input file: " << fileInput << "\n";
     std::cout << "output file: " << fileOutput << "\n";
-
-    std::ofstream FO(fileOutput);
-    if (!FO.is_open())
-    {
-        perror(("Error while opening output file " + fileOutput).c_str());
-        return;
-    }
-    // Open JSON object.
-    FO << "{\n";
-
-    if (FO.bad())
-    {
-        perror(("Error while writing output file " + fileOutput).c_str());
-        return;
-    } 
-
-    FO.close();
 
     // Start reading from input file.
     std::ifstream FI(fileInput);
@@ -141,7 +142,6 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
     }
 
     std::string line;
-    nlohmann::json J; 
 
     while (std::getline(FI, line))
     {
@@ -153,53 +153,9 @@ void md5_attacks::generateHashes(const std::string &fileInput, const std::string
         }
 
         std::string hash = paca::myMD5(line);
-        // std::cout << "current line: " << line << std::endl;
-        // Convert string to wstring
-        // std::wstring wideString = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().from_bytes(line);
-
-        J[hash] = line;
-        std::string temp = J[hash];
-
-        if (!isValidUTF8(temp))
-        {
-            std::cout << line << " is valid UTF-8? " << (isValidUTF8(line) ? "Yes" : "No") << std::endl;
-            std::cout << temp << " is valid UTF-8? false" << std::endl;
-            J.erase(hash);
-            continue;
-        }
-
-        if (J.size() == 1000)
-        {
-            // std::cout << "last to write was: " << line << "\n";
-            bool res = writeToJSON(fileOutput, J);
-            J = {};
-            if (!res)
-            {
-                break;
-            }
-        }
         
     }
     FI.close();
-
-    // Reopen file in append mode.
-    FO.open(fileOutput, std::ios::app);
-    if (!FO.is_open())
-    {
-        perror(("Error while opening output file " + fileOutput).c_str());
-        return;
-    }
-
-    // Close JSON object.
-    FO << "}\n";
-
-    if (FO.bad())
-    {
-        perror(("Error while writing output file " + fileOutput).c_str());
-        return;
-    } 
-
-    FO.close();
 }
 
 /*
